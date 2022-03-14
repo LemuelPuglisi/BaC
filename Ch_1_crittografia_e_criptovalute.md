@@ -103,5 +103,63 @@ L'intuizione è la seguente: se $H$ ha un output di 256 bit, allora la funzione 
 
 
 
-> Pagina 45. (Hash pointers and data structures)
+## Hash pointers e strutture dati
+
+### Hash pointers
+
+Un **hash pointer** è un determinato tipo che contiene due informazioni: il luogo in cui è conservata una certa informazione e l'hash dell'informazione stessa. L'hash serve a capire se l'informazione è cambiata o meno: basterà consultare l'informazione grazie al puntatore, calcolare il suo hash e confrontarlo con quello conservato nell'hash pointer. Se i due hash coincidono, allora l'informazione è quella originale. 
+
+![image-20220314112538622](Ch_1_crittografia_e_criptovalute.assets/image-20220314112538622.png)
+
+
+
+### Block chain
+
+Una block chain è praticamente una linked list, dove al posto dei puntatori utilizziamo gli hash pointer. Ogni blocco ci indica la posizione del blocco precedente e l'hash del suo contenuto. Quest'ultimo ci permette di verificare che il contenuto del blocco precedente non sia cambiato. Viene conservata solo la head della block chain, da cui possiamo raggiungere tutti gli altri blocchi a cascata.
+
+![image-20220314112810494](Ch_1_crittografia_e_criptovalute.assets/image-20220314112810494.png)
+
+
+
+#### Applicazioni: tamper evident log
+
+Una possibile applicazione della block chain è un **tamper-evident log** (registro a prova di manomissione). Proviamo a manomettere il registro: l'obiettivo dell'avversario sarà quello di manomettere il contenuto di un blocco senza che chi contiene l'head della block-chain si accorga della manomissione. Supponiamo di manomettere il blocco $k$: questo implica che l'hash del blocco $k$ conservato nel blocco $k+1$ non corrisponderà all'hash del blocco $k$ modificato (questo è garantito statisticamente dalla collision resistance della funzione hash). Per risolvere questo problema, l'attaccante potrebbe provare a modificare l'hash del blocco $k+1$, ma a questo punto la manomissione sarà rilevata nel blocco $k+2$. Continuando in questo modo, alla fine la manomissione verrà rilevata nella head della block chain, che non essendo accessibile all'attaccante non potrà essere modificata.  ![image-20220314122530278](Ch_1_crittografia_e_criptovalute.assets/image-20220314122530278.png)
+
+Il risultato è che per mantenere la block chain consistente pur manomettendo il contenuto di blocchi, bisogna modificare gli hash di tutti i blocchi della catena fino all'head, che potrebbe benissimo essere memorizzata da qualche parte. Quindi potremmo costruire una grossa block chain,  e mantenerla consistende memorizzando solo la head, che chiameremo **genesis block**.
+
+ 
+
+### Merkle trees
+
+Un'altra struttura dati che possiamo costruire con gli hash pointers è l'**albero binario**. Un albero binario che utilizza gli hash pointer è detto **Merkle Tree**. Supponiamo di avere dei blocchi contenenti dei dati: tali blocchi saranno le foglie del nostro albero. Dividiamo questi blocchi in coppie e per ogni coppia costruiamo una struttura dati contenente due hash pointers. Continuiamo a costruire livelli dell'albero in questo modo sino a che non raggiungiamo un solo blocco, ovvero la radice dell'albero. 
+
+![image-20220314124118358](Ch_1_crittografia_e_criptovalute.assets/image-20220314124118358.png)
+
+Una manomissione in un blocco qualsiasi dell'albero provocherà una inconsistenza sul parent al livello superiore. Modificare il parent causerà una inconsistenza al livello ancora superiore, e così via fino alla root dell'albero. Questo implica che per validare un merkle tree possiamo conservare l'hash pointer della sola root. 
+
+
+
+#### Proof of Membership
+
+Un'altra funzionalità dei merkle tree è la proof of membership coincisa. Per mostrare che un blocco appartiene alla block chain, bisogna mostrare la porzione della lista che va dal blocco sino alla head. Al contrario, nel Merkle tree basta indicare la strada che va dal blocco alla radice, che è molto più coincisa: 
+
+![image-20220314125347518](Ch_1_crittografia_e_criptovalute.assets/image-20220314125347518.png)
+
+Se l'albero contiene $n$ nodi, bisogna mostrare al più $\log(n)$ nodi per dimostrare l'appartenenza all'albero. In una block chain, nel caso pessimo è necessario mostrare tutti ed $n$ i nodi. 
+
+
+
+#### Proof of Nonmembership
+
+Un **sorted merke tree** (merkle tree ordinato) è un merkle tree in cui i blocchi sottostanti sono ordinati secondo una certa funzione di ordinamento (alfabetico, lessicografico, numerico, etc.).  
+
+Un sorted Merkle tree ha la proprietà di verificare la **non appartenenza** di un certo nodo in tempo e spazio logaritmico. Sia $x$ il nodo cercato, troviamo un cammino che va dalla radice al predecessore $x_p$ di $x$, dopodiché troviamo il cammino che va dalla radice al successore $x_s$ di $x$. Se $x_p$ ed $x_s$ sono consecutivi, allora sicuramente $x$ non apparterrà all'albero. Questo poiché se $x$ appartenesse all'albero allo tra $x_p$ ed $x_s$ dovrebbe esserci lo spazio per conservare $x$, cosa non vera dato che i due nodi sono consecutivi. 
+
+> Possiamo utilizzare gli hash pointer in qualsiasi struttura **che utilizza puntatori** e che **non abbia cicli**. Se ci fossero dei cicli, allora non sarebbe possibile creare un hash che riassuma il ciclo. In una struttura aciclica, partiamo dai blocchi che non hanno puntatori uscenti e calcoliamo i loro hash nei parent, e così via fino ad un certo head della struttura. In una struttura ciclica, il ciclo non contiene nodi che non hanno puntatori uscenti.  
+
+
+
+
+
+
 
