@@ -115,7 +115,17 @@ Un **hash pointer** è un determinato tipo che contiene due informazioni: il luo
 
 ### Block chain
 
-Una block chain è praticamente una linked list, dove al posto dei puntatori utilizziamo gli hash pointer. Ogni blocco ci indica la posizione del blocco precedente e l'hash del suo contenuto. Quest'ultimo ci permette di verificare che il contenuto del blocco precedente non sia cambiato. Viene conservata solo la head della block chain, da cui possiamo raggiungere tutti gli altri blocchi a cascata.
+Una block chain è praticamente una linked list, dove al posto dei puntatori utilizziamo gli hash pointer. Ogni blocco ci indica la posizione del blocco precedente e l'hash del suo contenuto. Quest'ultimo ci permette di verificare che il contenuto del blocco precedente non sia cambiato. Il primo blocco della block chain viene chiamato **genesis block**, e non punta a nessun blocco precedente. Dato che il blocco punta al precedente, l'inserimento viene effettuato in testa. Viene conservata solo la head della block chain, da cui possiamo raggiungere tutti gli altri blocchi a cascata. Di seguito un esempio di validazione della blockchain: 
+
+```python
+def validateBlockchain(blockchain: Blockchain):
+	for block in blockchain:
+		if block.is_genesis():
+            return True
+        prev = block.get_prev_block()
+        if block.prev_hash() != prev.calculate_hash():
+            return False
+```
 
 ![image-20220314112810494](Ch_1_crittografia_e_criptovalute.assets/image-20220314112810494.png)
 
@@ -159,7 +169,80 @@ Un sorted Merkle tree ha la proprietà di verificare la **non appartenenza** di 
 
 
 
+## Firme digitali
+
+Le firme digitali sono una primitiva crittografica ed insieme alle funzioni hash costituiscono i mattoncini per creare la criptovaluta. Gli algoritmi di firma digitale devono godere delle seguenti proprietà: 
+
+1. La firma deve essere verificabile
+2. La firma deve essere infalsificabile (uf-cma)
+
+Non tratteremo le firme digitali, che sono già ampiamente trattate nel capitolo 11 "Firme Digitali" del blocco di appunti. Bitcoin utilizza ECDSA, per cui bisogna leggere attentamente il paragrafo dedicato. 
 
 
 
+## Public key as Identities 
+
+L'idea è quella di utilizzare le chiavi pubbliche degli schemi di firma digitale come **identità**. La firma in un messaggio indica l'identità $pk$ se $pk$ verifica correttamente la firma. Per impersonare l'identità $pk$, l'utente deve detenere la chiave di firma $sk$. La conseguenza di questo modello è che nuove identità possono essere facilmente create generando una coppia di chiavi $(sk, pk)$. 
+
+> Possiamo utilizzare anche un hash della chiave pubblica $pk$ come identità $Id= h(pk)$, ed in questo modo l'utente dovrà prima verificare che $h(pk) == Id$ per attribuire uno statement ad una identità e dopodichè verificare la firma con $pk$.
+
+La chiave pubblica $pk$ sembrerà una stringa random, tuttavia non garantisce anonimato poiché dall'analisi delle transazioni (e statements) potremmo collegare una $pk$ ad una persona reale. 
+
+
+
+### Gestione decentralizzata dell'identità
+
+Anziché registrare le utenze in un sistema centralizzato, l'identità viene creata localmente generando una nuova coppia $(sk, pk)$, e l'utente può generare pressoché infinite identità. La probabilità di generare due identità uguali è così piccola che non dovremmo preoccuparci che ciò accada. Questo è il modo in cui opera Bitcoin. Le identità prendono il nome di **indirizzi**. L'indirizzo non è altro che un **hash della chiave pubblica**. 
+
+
+
+## Due semplici criptovalute
+
+Vediamo due esempi totalmente differenti di criptovalute e analizziamo benefici e problemi. 
+
+
+
+### Goofycoin
+
+In Goofycoin ci sono solo due regole: 
+
+1. Una certa identità può creare arbitrariamente monete che gli appartengono. 
+2. Chiunque detiene una moneta può trasferirla ad un'altra identità. 
+
+(1) Per generare una moneta l'utente utilizza la funzione *CreateCoin* e genera un identificativo univoco della moneta, chiamato *uniqueCoinID*. Poi crea la stringa CreateCoin[UniqueCoinID], e la firma digitalmente con la propria chiave di firma $sk$, generando la firma $sig$. La stringa, insieme alla firma $sig$, è una moneta. Attraverso la chiave pubblica dell'utente, tutti possono verificare correttamente che egli ha firmato lo statement di creazione della moneta, e che quindi tale moneta è valida. 
+
+(2) Supponiamo che l'utente Goofy voglia inviare una moneta all'utente Alice. Per fare ciò, Goofy crea un nuovo statement "Paga **questo** ad Alice", dove "questo" è un hash pointer allo statement di creazione della moneta. Dopodiché, Goofy firma digitalmente lo statement. Dopo aver firmato, Alice è la legittima proprietaria della moneta e può dimostrarlo mostrando lo statement di pagamento firmato da Goofy. Dopodiché, Alice può pagare Bob con la moneta acquisita attraverso lo statement "Paga **questo** a Bob", dove "questo" è un hash pointer allo statement di pagamento firmato da Goofy. Dopodiché Alice firma digitalmente il nuovo statement e la moneta apparterrà a Bob (e così via). La validità viene verificata dalla catena di hash pointers. 
+
+Riassumendo: 
+
+1. L'utente $x$ può creare nuove monete firmando uno statement in cui asserisce di star creando una nuova moneta con un identificativo univoco. 
+2. Chiunque detenga una moneta può passarla ad un altro utente $y$ firmando uno statement "Paga $y$ con questa moneta", dove $y$ è una chiave pubblica. 
+3. Tutti possono verificare le legittima proprietà di una moneta seguendo la catena di hash pointers, fino alla creazione della moneta stessa, e verificando correttamente le firme man mano. 
+
+Il **problema** principale è il **double spending attack**: Alice può pagare Bob con una moneta firmando lo statement e non comunicandolo a nessuno. Alice può pagare Chuck con la stessa moneta, poiché quest'ultimo è ignaro della precedente transazione, ed inoltre lo statement risulterà valido. Alice sta spendendo la moneta due volte. Il double spending è uno dei problemi principali delle criptovalute e, non risolvendolo, Goofycoin risulta essere una criptovaluta insicura. 
+
+
+
+### Scroogecoin 
+
+Scroogecoin prova a risolvere il problema del double spending centralizzando il sistema. Esiste una entità chiamata Scrooge che detiene un libro mastro (ledger) append-only, contenente lo storico di tutte le transazioni. La proprietà append-only garantisce che ciò che viene scritto rimarrà per sempre nel libro mastro. Se la proprietà è verificata, allora possiamo prevenire il double spending controllando se la moneta è stata spesa precedentemente dal pagante attraverso il libro mastro. Per garantire ciò, Scrooge può semplicemente utilizzare una blockchain, dove ogni blocco è una transazione (un'ottimizzazione consiste nell'inserire più transazioni nello stesso blocco, come fa Bitcoin).  Ogni blocco contiene un ID della transazione, il contenuto della transazione e l'hash pointer al blocco precedente. Scrooge firma digitalmente l'ultimo blocco della catena (l'head, che verifica l'intera catena), e pubblica la sua firma insieme alla block chain. 
+
+![image-20220319095404493](Ch_1_crittografia_e_criptovalute.assets/image-20220319095404493.png)
+
+In Scroogecoin, Scrooge firma digitalmente ogni transazione, oltre a firmare l'head della blockchain. Scrooge si prenderà cura di non firmare transazioni contenenti double spending. L'esistenza della blockchain assicura agli utenti che Scrooge non possa rimuovere o aggiungere transazioni a suo piacimento senza che la struttura cambi. 
+
+Anche in Scroogecoin esiste l'operazione *CreateCoin*, ma è estesa per permettere di creare più monete nella stessa transazione. Ogni moneta ha un numero seriale, un valore (in Scroogecoin), ed un recipient (destinatario), ovvero la public key del detentore. Ci riferiremo ad una moneta con un CoinID, formato dall'id della transazione e dal numero seriale della moneta.  
+
+![image-20220319100638729](Ch_1_crittografia_e_criptovalute.assets/image-20220319100638729.png)
+
+Per definizione, una transazione CreateCoin è valida se è firmata da Scrooge. Il secondo tipo di transazione è la PayCoin. Questa transazione consuma delle monete (le distrugge) e crea nuove monete con lo stesso valore ma con dei CoinID differenti. La transazione deve essere firmata da chiunque stia pagando con una moneta. Una transazione PayCoin è valida se soddisfa le seguenti 4 condizioni: 
+
+1. Le monete consumate devono essere valide e create in transazioni precedenti. 
+2. Le moente consumate non devono essere state consumate in precedenza. 
+3. Il valore totale delle monete generate è uguale al valore totale di quelle consumate. 
+4. La transazione è valida solo se è firmata da tutti i proprietari delle monete consumate. 
+
+Se la transazione è valida, Scrooge la accetterà e la inserira nella blockchain. Gli utenti considereranno la transazione come "avvenuta" se e solo se essa sarà inserita nella blockchain firmata da Scrooge. Le monete in questo sistema sono **immutabili**, ovvero non sono mai divise o combinate. Possiamo comunque aggirare il sistema facendo un pagamento dall'utente a se stesso, dove dividiamo o combiniamo delle monete e le assegniamo all'utente stesso (il valore in uscita è comunque uguale al valore in entrata). 
+
+Il **problema** della criptovaluta è proprio Scrooge: anche se non può creare transazioni false, può rifiutarsi di firmare valide transazioni di utenti. Inoltre Scrooge può creare infinite monete per se stesso. Il problema è proprio la **centralizzazione**, nel senso che gli utenti dovrebbero fidarsi ciecamente di Scrooge per utilizzare il sistema. Il nostro prossimo obiettivo sarà quello di costruire una criptocurrency dove Scrooge è decentralizzato. 
 
