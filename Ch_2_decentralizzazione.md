@@ -47,5 +47,86 @@ Questa è una descrizione a grandi linee, poiché: (1) la rete peer to peer non 
 
 ### Risultati di impossibilità
 
-pagina 71.
+La mancanza di un tempo globale ha spinto la letteratura ad una visione pessimistica dei protocolli di consenso. Un famoso risultato prende il nome di **Byzantine Generals Problem**. 
+
+> In questo problema, l'esercito è formato da divisioni, con a capo dei generali. I generali comunicano tra loro attraverso i messaggeri per stabilire un piano d'azione. Alcuni generali sono dei traditori e cercano di sabotare tale piano. Lo scopo è quello di arrivare ad un piano stabilito da generali onesti e di non permettere a quelli corrotti di sabotare l'azione. E' stata provata l'impossibilità di arrivare ad un piano non corrotto se almeno $\frac 1 3$ dei generali sono corrotti. 
+
+Un'altro risultato di impossibilità è il **Fischer-Lynch-Paterson**, dagli autori che lo hanno dimostrato. Sotto certe condizioni, il problema dimostra che è impossibile arrivare al consenso anche con 1 solo nodo corrotto nel sistema. 
+
+A dispetto di tali risultati di impossibilità, esistono protocolli di consenso come **Paxos**, basati su compromessi. Paxos non arriva mai ad un risultato inconsistente, ma sotto certe condizioni può procedere senza fare progressi.     
+
+
+
+### Breaking traditional assumptions 
+
+I risultati di impossibilità sono stati provati per determinati modelli, in cui Bitcoin non rientra. Il consenso di Bitcoin funziona bene nella pratica, pur non essendo completamente coperto il suo lato teorico. Capire teoricamente il perché del suo funzionamento è importante per sviluppare modelli che permettano di studiare sviluppi futuri. Vediamo quali sono le assunzioni che Bitcoin viola: 
+
+1. Bitcoin introduce l'idea degli incentivi (ad agire onestamente)
+2. Bitcoin fa pesante uso di randomness 
+3. Il consenso non ha un inizio ed una fine, ma è consolidato nel tempo
+
+Riguardo al punto (3), andando avanti nel tempo la probabilità che la propria visione dei blocchi sia analoga a quella stabilità dal consenso aumenta, mentre quella che la propria visione sia differente decrementa esponenzialmente. 
+
+
+
+## Consenso senza identità
+
+Bitcoin non vuole assegnare delle identità ai nodi poiché la pseudo-anonimità è contenuta nel design del sistema. Ogni peer può generare molte identità, il che apre le porte alla possibilità di un **Sybil attack**: le copie sono indistinguibili da normali utenti del sistema, pur essendo unicamente gestite dall'avversario. Questa è un'altra differenza rispetto agli altri sistemi che necessitano di consenso. 
+
+Per strutturare l'algoritmo di consenso di Bitcoin abbiamo bisogno di fare delle assunzioni, che spiegheremo successivamente. Assumiamo che il nostro sistema funzioni come una lotteria: esso distribuisce dei biglietti ai peer e seleziona il nodo candidato ad iniziare il protocollo di consenso estraendo un biglietto random. Dobbiamo anche supporre che se l'avversario sfrutta il Sybil attack, tutte le identità generate riescano a selezionare (insieme) un solo biglietto. 
+
+L'assunzione della selezione randomica del nodo permette il **consenso implicito**. Il nodo selezionato proporrà il prossimo blocco della block-chain, senza alcun processo di votazione. Se il nodo è malevolo ed inserisce un blocco non valido, allora i nodi che verranno selezionati successivamente potranno scegliere di non appendere il blocco a quest'ultimo (rifiutandolo), e di appenderlo a quello precedente (che hanno accettato). 
+
+![image-20220325122544464](Ch_2_decentralizzazione.assets/image-20220325122544464.png)
+
+
+
+### Bitcoin consensus algorithm (simplified)
+
+L'algoritmo è semplificato nel senso che assume l'abilità di selezionare un nodo random senza essere vulnerabile al Sybil attack. L'algoritmo procede come segue: 
+
+1. Le nuove transazioni vengono inviate in broadcast a tutti i nodi. 
+2. Ogni nodo inserisce le transazioni nel blocco. 
+3. Ad ogni round viene selezionato un nodo random.
+4. Il nodo selezionato manda il broadcast il blocco.
+5. I nodi accettano il blocco se e solo se tutte le transazioni sono valide (senza double spending e con delle firme valide). 
+6. I nodi esprimono accettazione per il blocco estendendo la blockchain su quel blocco, quindi includendo il suo hash. 
+
+Analizziamo perché questo attacco funziona. Supponiamo che l'avversario Alice voglia sovvertire il processo. 
+
+
+
+#### Rubare Bitcoin
+
+Supponiamo che Alice voglia rubare $n$ Bitcoin a Bob. Per fare ciò, Alice dovrà aggiungere al blocco una nuova transazione che trasferisce i Bitcoin da Bob ad Alice, ma questo richiede una firma valida di Bob. Se lo schema di firma sottostante è solido, Alice non riuscirà a contraffare la firma di Bob. 
+
+
+
+#### Denial-Of-Service Attack
+
+Supponiamo che Alice odi Bob, allora lei può decidere di non includere le transazioni provenienti da Bob nel blocco. In altre parole, Alice nega il servizio a Bob. Alice potrà fare questo durante il suo turno, ma non per sempre. A Bob basta aspettare un nodo successivamente selezionato randomicamente per avere le proprie transazioni all'interno della blockchain.  
+
+
+
+#### Double Spending
+
+Supponiamo che Bob abbia un negozio online e che Alice sia una sua cliente. Alice acquista un prodotto da Bob ed effettua una transazione. Supponiamo che qualche nodo onesto inserisca la transazione nel successivo blocco della blockchain. Vedendo la transazione nella blockchain, Bob invia il prodotto ad Alice. Supponiamo che per puro caso il prossimo nodo selezionato sia proprio Alice.  Allora Alice potrebbe benissimo ignorare il blocco che contiene la sua transazione verso Bob, ed estendere il blocco precedente. Inoltre, Alice inserirà nel blocco che lei propone una transazione che spende lo stesso numero di bitcoin dati a Bob verso un indirizzo controllato da lei stessa. Questo è un esempio di double-spending, dato che le due transazioni spendono la stessa moneta. Se Alice riesce a far estendere il suo nuovo (valido) blocco, allora il blocco contenente il pagamento a Bob non sarà più preso in considerazione (vedasi figura sotto). 
+
+![image-20220325125710438](Ch_2_decentralizzazione.assets/image-20220325125710438.png)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
