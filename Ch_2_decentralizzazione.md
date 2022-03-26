@@ -110,23 +110,177 @@ Supponiamo che Alice odi Bob, allora lei può decidere di non includere le trans
 
 #### Double Spending
 
-Supponiamo che Bob abbia un negozio online e che Alice sia una sua cliente. Alice acquista un prodotto da Bob ed effettua una transazione. Supponiamo che qualche nodo onesto inserisca la transazione nel successivo blocco della blockchain. Vedendo la transazione nella blockchain, Bob invia il prodotto ad Alice. Supponiamo che per puro caso il prossimo nodo selezionato sia proprio Alice.  Allora Alice potrebbe benissimo ignorare il blocco che contiene la sua transazione verso Bob, ed estendere il blocco precedente. Inoltre, Alice inserirà nel blocco che lei propone una transazione che spende lo stesso numero di bitcoin dati a Bob verso un indirizzo controllato da lei stessa. Questo è un esempio di double-spending, dato che le due transazioni spendono la stessa moneta. Se Alice riesce a far estendere il suo nuovo (valido) blocco, allora il blocco contenente il pagamento a Bob non sarà più preso in considerazione (vedasi figura sotto). 
+Supponiamo che Bob abbia un negozio online e che Alice sia una sua cliente. Alice acquista un prodotto da Bob ed effettua una transazione. Supponiamo che qualche nodo onesto inserisca la transazione nel successivo blocco della blockchain. Vedendo la transazione nella blockchain, Bob invia il prodotto ad Alice. 
+
+![image-20220325155107600](Ch_2_decentralizzazione.assets/image-20220325155107600.png)
+
+Supponiamo che per puro caso il prossimo nodo selezionato sia proprio Alice.  Allora Alice potrebbe benissimo ignorare il blocco che contiene la sua transazione verso Bob, ed estendere il blocco precedente. Inoltre, Alice inserirà nel blocco che lei propone una transazione che spende lo stesso numero di bitcoin dati a Bob verso un indirizzo controllato da lei stessa. 
+
+![image-20220325155317514](Ch_2_decentralizzazione.assets/image-20220325155317514.png)
+
+Questo è un esempio di double-spending, dato che le due transazioni spendono la stessa moneta. Se Alice riesce a far estendere il suo nuovo (valido) blocco, allora il blocco contenente il pagamento a Bob non sarà più preso in considerazione (vedasi figura sotto). 
 
 ![image-20220325125710438](Ch_2_decentralizzazione.assets/image-20220325125710438.png)
 
+Il pagamento che andrà a buon fine sarà quello che risiede sulla coda più lunga della blockchain. I nodi onesti seguono la policy di estendere sempre il **longest valid branch**, ovvero il branch valido della blockchain più lungo.  In questo caso, entrambi i branch sono validi (entrambi legittimi dal punto di vista generale) ed hanno la stessa lunghezza. 
+
+> In generale i nodi seguono l'euristica di estendere il primo blocco che arriva dalla rete. Ma bisogna considerare i problemi di latenza, per cui non è una regola solida. 
+
+Quando uno dei due branch verrà esteso, la probabilità che continuerà ad essere esteso cresce, mentre l'altro branch verrà ignorato. I blocchi residenti su branch non continuati prendono il nome di **orphan blocks** o **stale blocks**. 
+
+> Se Bob, anziché aspettare che la transazione sia all'interno della blockchain, inviasse il prodotto non appena Alice effettua la transazione, allora il double spending sarebbe ancora più semplice: Alice potrebbe benissimo inviare la transazione degli stessi Bitcoin verso se stessa e, con un po' di fortuna, un nodo onesto potrebbe inserire quest'ultima nella blockchain anziché il pagamento verso Bob.
+
+In generale, più conferme riceve una transazione (in termini di blocchi che la estendono) più alta è la probabilità che essa sia consolidata. In termini probabilistici, la probabilità che Alice abbia confermata la seconda transazione decresce esponenzialmente con il numero di conferme della prima. Di fatto, l'euristica che si utilizza è quella di attendere 6 conferme per assumere una transazione consolidata nella blockchain. Il numero 6 è dato da un trade-off tra tempo atteso (circa 10 min a conferma, quindi per 6 conferme circa 1h), e la probabilità che la transazione resti nella blockchain. 
+
+> La protezione contro transazioni non valide è crittografica, ma è rinforzata dal consenso. Questo vuol dire che l'unica ragione che impedisce ad una transazione di rientrare in una blockchain è che la maggior parte dei nodi sono onesti. La protezione contro il double spending è invece interamente gestita dal consenso. 
 
 
 
+## Incentivi
+
+Anziché "punire" i nodi malevoli (il che risulta problematico), Bitcoin punta ragionevolmente sul incentivare i nodi ad agire in modo onesto: spiegheremo i **block reward** e le **transaction fees**. 
 
 
 
+### Block reward 
+
+Il nodo selezionato che crea il blocco include anche una transazione speciale, ovvero una transazione di **coin-creation** dove dei Bitcoin vengono assegnati ad un indirizzo a sua scelta (tipicamente di sua proprietà). Questa transazione è legittima ed il numero di Bitcoin che vengono creati si dimezza (circa) ogni 4 anni. Il block reward incentiva i nodi a comportarsi onestamente perché è l'unico modo per riscuotere i soldi! Se il blocco diventa un orphan block, l'utente non potrà più utilizzare i coin creati, e quindi non avrà guadagnato nulla. 
 
 
 
+### Transaction fees 
+
+Dato che il numero di bitcoin della block reward dimezzano ogni quattro anni (serie geometrica), ad un certo punto (circa 2140) non ci sarà più nessun block reward per chi crea il blocco (21 mil bitcoin in totale) per questo introduciamo la **transaction fee**.
+
+<img src="Ch_2_decentralizzazione.assets/image-20220325173342002.png" alt="image-20220325173342002" style="zoom: 35%;" />
+
+Il creatore di una transazione può decidere di devolvere una piccola percentuale dell'output della sua transazione a chi creerà il blocco nella blockchain che conterrà la transazione. Questa percentuale (a piacere) viene chiamata **transaction fee**. Il creatore del blocco guadagnerà tutte le transaction fees associate alle transazioni che il blocco contiene. 
 
 
 
+## Mining e Proof of work
+
+I problemi che nascono dagli incentivi sono i seguenti: 
+
+* Tutti vogliono creare i blocchi per guadagnare con incentivi
+* Un avversario potrebbe creare tanti nodi per aumentare la probabilità di essere selezionato
+
+La soluzione è chiamata **proof of work**: seleziamo i nodi in proporzione ad una risorsa che speriamo che nessuno possa monopolizzare (es. potenza di calcolo). 
+
+> Alternativamente, potremmo selezionare i nodi in proporzione al possesso della valuta, in questo caso parliamo di **proof of stake** (utilizzata in altre criptovalute). 
+
+Tornando alla proof of work: è come mettere in competizione i nodi tra di loro utilizzando la loro potenza di calcolo, quindi quest'ultima diventa il parametro di selezione. La potenza di calcolo richiesta è così alta da non poter essere monopolizzabile. Bitcoin riesce a realizzare la proof of work attraverso degli **hash puzzles**. Al nodo che propone il prossimo blocco è richiesto di cercare un certo numero ($nonce$) che concatenato all'hash del blocco precedente e alla lista di tutte le transazioni che lo compongono, e dato in input alla funzione hash, produca una stringa che rientri in uno spazio target piccolo rispetto al codominio della funzione hash stessa, il che rende difficile il task. Potremmo definire il target space come l'insieme di valori minori di un certo numero $target$ (ad esempio), quindi $nonce$ dovrà soddisfare la seguente disequazione: 
+
+$$
+H(nonce \mid\mid \text{prev-hash} \mid\mid tx \mid\mid \dots \mid\mid tx ) 
+< target
+$$
+Se la funzione hash $H$ è puzzle friendly, allora l'unico modo di trovare $nonce$ che risolva tale disequazione è tentare abbastanza numeri fino a trovare quello fortunato. La nozione di **hash puzzle** e **proof of work** rimuove completamente la necessità di selezionare un nodo random. I nodi competono in maniera indipendente ed il nodo fortunato propone il prossimo blocco. Vi sono 3 importanti proprietà che un hash puzzle deve rispettare, le vedremo di seguito. 
 
 
 
+### Prop. 1 - Difficoltà del puzzle
+
+La prima proprietà è che la soluzione del puzzle deve essere difficile da calcolare. Nel 2015 il numero atteso di hash per blocco da calcolare per trovare una soluzione era $\approx 10^{20}$. Il processo di risoluzione di questi hash puzzle è detto **Bitcoin mining**, ed i partecipanti prendono il nome di **miners**. Il mining diventa insensato per chi ha poca capacità computazionale. 
+
+
+
+### Prop. 2 - Costo parametrizzabile
+
+La seconda proprietà è il costo parametrizzabile, ovvero che può cambiare nel tempo. Questo è ottenuto poiché tutti i nodi della rete Bitcoin ricalcolano la grandezza del target space ogni 2016 blocchi. Il ricalcolo è fatto in modo tale che il tempo medio di produzione di un blocco sia ancora 10 minuti. Se un blocco viene creato ogni 10 minuti, 2016 blocchi vengono creati circa ogni 2 settimane, quindi il target space cambia circa ogni 2 settimane. 
+
+
+
+Più miners si uniscono alla rete con hardware veloce, più i blocchi saranno trovati velocemente. Durante il ricalcolo del target space, questo diminuirà rendendo più difficile la creazione del blocco. Se investiamo una quantità fissata di hardware, allora la probabilità di trovare un blocco dipende da cosa fanno gli altri miners. Nello specifico, una formula cattura questo aspetto: 
+
+> La probabilità che un miner qualunque vinca il prossimo blocco è equivalente alla frazione di potenza globale di calcolo degli hash che esso possiede e controlla. 
+
+Se Alice detiene lo 0.1% della potenza di calcolo degli hash totale, allora vincerà la produzione di 1 blocco ogni circa 1000 blocchi. Il motivo di **ricalibrare il target** space e mantenere l'invariante dei 10 minuti è che se i blocchi si susseguissero in un intervallo breve di tempo, allora l'efficienza di inserire più transazioni nello stesso blocco verrebbe meno. Non c'è un calcolo particolare che ha portato alla conclusione dei 10 minuti, mettere 7 o 12 minuti farebbe comunque funzionare il sistema. 
+
+> **Due modelli comportamentali dei miners**
+> Anziché modellare il comportamento dei miner in due categorie, onesti e disonesti, il campo della teoria dei giochi assume che (in questo modello) ogni nodo si comporti bene in proporzione ai suoi incentivi. Se gli incentivi sono ben strutturati, allora la maggior parte dei nodi seguiranno le regole per la maggior parte del tempo. La grande domanda consiste nello scoprire se il comportamento standard di un miner è un equilibrio di Nash, ovvero rappresenta una situazione stabile in cui nessun miner guadagna di più deviando il sistema piuttosto che rispettando le regole. 
+
+La maggior parte degli attacchi a Bitcoin sono infattibili se la maggior parte dei miners, pesati per potenza di calcolo, seguono il protocollo, ovvero sono onesti. Questo è vero poiché se la maggior parte dei miners, pesati per potenza di calcolo di hash, sono onesti, allora la competizione per produrre il prossimo blocco garantirà almeno il 50% di possibilità che il prossimo blocco sia prodotto da un nodo onesto. 
+
+
+
+#### Considerazioni probabilistiche 
+
+Il miglior modo di risolvere l'hash puzzle è di tentare tutti i numeri uno ad uno. Questo processo è chiamato **Bernoulli Trial** e consiste in un esperimento con due possibili risultati, nel nostro caso sono "L'hash ricade nel target space" ed il viceversa. Le probabilità non cambiano tra esperimenti successivi, e questo è garantito dal fatto che l'hash function è (pseudo)randomica. 
+
+Tipicamente i miner provano così tanti hash che il Bernoully trials, che è un processo probabilistico discreto, è approssimabile da un processo probabilistico continuo, chiamato **Poisson process**, dove gli eventi occorrono in maniera indipendente ad una frequenza media costante. Da questo possiamo tirare fuori una PDF (probability density function) rispetto al tempo atteso prima che il blocco venga creato: 
+
+![image-20220326093736081](Ch_2_decentralizzazione.assets/image-20220326093736081.png)
+
+Questa è una distribuzione esponenziale, e anche se esiste una piccola probabilità che il blocco venga creato dopo secondi o dopo qualche ora, la distribuzione ci garantisce che il tempo atteso è in media 10 minuti. Il grafico tiene conto dell'intera rete, ma fossimo miners e volessimo sapere qual è il tempo medio da attendere prima di trovare un blocco potremmo usare la seguente equazione:
+$$
+\text{tempo medio per il prossimo blocco} = \frac
+{10 \text{ minuti}}
+{\text{ frazione di potenza di calcolo di hash }}
+$$
+Quindi se possiedo lo 0.1% di potenza di calcolo, dovrò aspettare in media 10.000 minuti. Con questa distribuzione non solo la media sarà alta, ma anche la varianza! E questo ci impedisce di fare troppo affidamento al tempo medio. 
+
+> **Concorrenza tra miners**
+> Se Alice ha 100 volte la potenza computazionale di Bob, non vuol dire che Bob non produrrà mai un blocco, bensì vuol dire che in un certo periodo di tempo, Alice avrà prodotto 100 volte i blocchi prodotti da Bob. 
+
+
+
+### Prop. 3 - Verifica semplice
+
+Una soluzione dell'hash puzzle deve essere semplice da verificare. Nel nostro caso lo è, poiché avendo la nonce utilizzata, basta ricalcolare l'hash e controllare che il numero ottenuto sia minore del numero target. Ogni miner può verificare che il blocco soddisfi l'hash puzzle, per cui possiamo rinunciare ad una verifica centralizzata. 
+
+
+
+### Costo del mining
+
+Possiamo calcolare quanto sia redditizio fare mining: 
+
+```
+if 
+	mining reward > mining cost
+then the miner makes a profit
+where 
+	mining reward = block reward + tx fees
+	mining cost = hardware cost + operating cost (electricity, cooling, etc.)
+```
+
+Ci sono varie complicazioni in questo statement: mentre il costo dell'hardware è fisso, il costo operativo è volatile, inoltre la frequenza con cui si trovano i blocchi dipende non solo dalla propria capacità computazionale, ma anche da quella della rete complessiva. Per ultimo, l'incentivo è in Bitcoin, il che è una (cripto)valuta estramamente volatile.  
+
+>**Non esiste 1 BTC**
+>Non esiste qualcosa come 1 bitcoin. I bitcoin sono output di transazioni, che possono avere un valore con massimo 8 cifre di precisione decimali. La cifra più piccola è 0.00000001 BTC ed è chiamata 1 **satoshi**. 
+
+> **Bitcoin ownsership**
+> Dato il funzionamento del sistema, dire che Alice possiede dei bitcoin equivale a dire che i nodi della rete concordano sul numero di Bitcoin posseduti da Alice. 
+
+
+
+## Bootstrapping di una criptovaluta
+
+Tre idee tengono insieme Bitcoin: 
+
+- La sicurezza della blockchain
+- La salute dell'ecosistema di mining 
+- Il valore della valuta
+
+La blockchain è sicura se l'avversario non è in grado di raggirare il sistema di consenso, e di conseguenza di disporre di molti (>50%) dei nodi di mining per la creazione di un nuovo blocco. Per soddisfare queste condizioni, si devono invogliare miners onesti a partecipare al protocollo, ma questo avviene solo se il valore di scambio della valuta permette di avere profitto. Il valore di scambio cresce se gli utenti si fidano della sicurezza della blockchain. Nella pratica, è un cane che si morde la coda. Non c'è una spiegazione specifica sul come e sul perché Bitcoin abbia raggiunto queste tre condizioni nel tempo. 
+
+
+
+## The 51% attack 
+
+Supponiamo che una entità controlli il 51% della potenza di mining della rete. Vediamo che attacchi può fare questa entità. 
+
+**L'entità può rubare da un indirizzo esistente?**
+La risposta è NO. L'attaccante non può rubare bitcoin da un indirizzo se non sovvertendo il sistema crittografico (di firma) sottostante. Supponendo che l'attaccante inserisca un blocco con una transazione del genere, e che prosegua per un certo periodo di turni ad inserire blocchi data la sua predominanza, ad un certo punto un blocco onesto semplicemente riconoscerà il blocco come non valido (come tutto il branch da esso esteso) e continuerà dal blocco precedente. 
+
+**L'entità può sopprimere delle transazioni?**
+L'attaccante ha quasi il controllo del protocollo di consenso, ma non può impedire alle transazioni di essere inviate in broadcast alla rete. Questo significa che esse raggiungeranno comunque un nodo onesto con grossa probabilità e verranno inserite, magari dopo un lasso di tempo maggiore.  
+
+**L'entità può bloccare gli incentivi?**
+L'attaccante non può modificare il software utilizzato da tutti i nodi, ma solo quello utilizzato dai propri nodi. Se l'attaccante cambia l'incentivo da 25 BTC a 100 BTC, semplicemente l'incentivo (e quindi il blocco) sarà considerato non valido dai nodi onesti. 
+
+**L'entità può distruggere l'affidabilità della criptovaluta?**
+Se il sistema diventa costantemente attaccato da tentativi di double spending o in generale di sovversione da questa entità, allora gli utenti potrebbero perdere fiducia nel sistema anche se gli attacchi non vanno a buon fine. Questo farebbe cadere l'exchange rate della criptovaluta. In effetti, questo è l'unico attacco che potrebbe effettuare una entità del genere.  
+
+In generale, avere il 51% della potenza di mining significa investire una quantità di soldi stratosferica e non avere nessun guadagno (diretto), quindi a livello finanziario l'attacco è insensato. 
 
