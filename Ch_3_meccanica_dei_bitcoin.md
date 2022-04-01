@@ -90,7 +90,13 @@ Uno script proof-of-burn è uno script che elimina dei bitcoin, ovvero li rende 
 
 ### Pay-to-Script-Hash
 
-<Ancora da fare/> 
+In Bitcoin è il sender dei coin a specificare lo script. Ipotizziamo che uno shop online richieda uno script molto complesso per l'acquisto di un prodotto. Il compratore (sender) potrebbe non essere d'accordo e potrebbe richiedere un semplice indirizzo a cui inviare i Bitcoin. La soluzione è lo script **P2SH** (pay-to-script-hash): anziché inviare i Bitcoin all'hash di una chiave pubblica, si inviano i Bitcoin all'hash del complesso script. Si impone che per redimere i Bitcoin sia necessario rivelare lo script che corrisponde all'hash e provvedere i dati affinché esso restituisca `true`. Lo script P2SH esegue i seguenti passi:
+
+1. Calcola l'hash del primo valore nello stack (lo script passato)
+2. Controlla che l'hash dello script e l'hash calcolato coincidano
+3. Prende lo script estratto dallo stack e lo interpreta come sequenza di istruzioni
+
+Nello stack ci saranno anche i dati necessari ad eseguire il complesso script. P2SH aumenta anche l'efficienza del sistema: i miners devono tenere traccia degli OUTX non ancora redenti, ed in questo caso anziché conservare un lungo script, si conserva il suo hash. 
 
 
 
@@ -124,5 +130,28 @@ Che succede se l'operatore decide di non firmare nessun micropagamento? I bitcoi
 
 
 
+## Bitcoin blocks
 
+Le transazioni sono raggruppate in blocchi. Questa è una ottimizzazione, per vari motivi: 
 
+* Altrimenti i miners dovrebbero stabilire consenso per ogni transazione (throughput minore)
+* La blockchain sarebbe molto più lunga, quindi le verifiche sarebbero meno efficienti
+
+I blocchi della blockchain contengono:
+
+- un **block header** 
+- un hash pointer alle transazioni
+- un hash pointer al blocco precedente. 
+
+Le transazioni del blocco sono disposte su un **Merkle tree**, e questo ci permette di conservare un hash efficiente che le rappresenti. Come discusso nei precedenti capitoli, possiamo possiamo provare l'esistenza di una tx nel blocco fornendo un cammino dell'albero dalla root alla tx la cui lunghezza è logaritmica rispetto al numero totale di transazioni nel blocco.
+
+![image-20220401123058508](Ch_3_meccanica_dei_bitcoin.assets/image-20220401123058508.png)
+
+L'**header** contiene informazioni relative al **mining puzzle**, ad esempio la **nonce** che ha generato l'hash vincente, un timestamp, i bit che indicano la difficolta del puzzle (etc). L'hash generato per vincere il puzzle è calcolato sull'header (hash escluso, ovviamente). I miners devono quindi utilizzare solo l'header del blocco per capire se esso ha vinto o meno il puzzle. Il campo dell'header `mrkl_root_field` contiene l'hash pointer della root dell'albero. Nel Merkle tree esiste una transazione chiamata **coinbase transaction**, ed ha lo scopo di assegnare la block reward e le transaction fees al miner. Essa differisce in vari modi da una transazione normale: 
+
+1. Ha sempre 1 input ed 1 output. 
+2. L'input contiene un hash pointer nullo.
+3. L'output contiene la somma del block reward e dei transaction fees. 
+4. Ha un parametro `coinbase` totalmente arbitrario.
+
+> PAGINA 116
