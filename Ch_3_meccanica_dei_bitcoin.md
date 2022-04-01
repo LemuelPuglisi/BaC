@@ -154,4 +154,74 @@ L'**header** contiene informazioni relative al **mining puzzle**, ad esempio la 
 3. L'output contiene la somma del block reward e dei transaction fees. 
 4. Ha un parametro `coinbase` totalmente arbitrario.
 
-> PAGINA 116
+
+
+## La rete Bitcoin
+
+La rete Bitcoin è una rete p2p che gira su TCP. Ha una topologia random e dinamica, dove i nodi sono connessi tra loro **in maniera casuale**. Nuovi nodi possono entrare a far parte della rete in qualsiasi momento, e possono altrettanto uscire da essa in qualsiasi momento. Non c'è una procedura da seguire per uscire dalla rete: semplicemente, quando i peer non ricevono segnali da un nodo per **3 ore consecutive** assumono che il nodo non sia più in rete (**oblio**). 
+
+
+
+### Ingresso nella rete
+
+Per entrare a far parte della rete basta contattare un **seed node**, ovvero un nodo di cui si conosce l'esistenza (es. un nodo preso da un forum). Bisogna mandare un messaggio speciale, ovvero una richiesta a conoscere gli altri peer della rete. Una volta ricevuta la lista di indirizzi, possiamo ripetere il processo con altri nodi in modo da arricchire il vicinato. L'output ideale è un collegamento con nodi random della rete. E' possibile selezionare i nodi con cui collegarsi e scartare gli altri. Una volta stabilita la connessione con i nodi, si entra a far parte della rete Bitcoin. 
+
+
+
+### Gossip protocol
+
+Per inviare una transazione, si utilizza un algoritmo di flooding chiamato **gossip protocol**. La transazione viene inviata in broadcast a tutti i nodi a cui si è collegati. Ogni vicino che riceve la transazione controlla che essa sia valida e, in tal caso, la aggiunge al proprio **transaction pool**, ovvero un pool di transazioni di cui il nodo è a conoscenza e che non sono ancora state inserite nella blockchain, e dopodiché la inoltra a sua volta. Se il nodo ha già la transazione nel proprio pool, allora la scarta (questo garantisce la terminazione dell'algoritmo di flooding). I controlli eseguiti dai nodi prima di accettare una transazione sono i seguenti: 
+
+1. **Validazione della transazione**: viene eseguito lo script di ogni UTXO che si cerca di spendere e ci si assicura che ritorni true.  
+2. **Prevenzione del double-spending**: si controlla che la transazione non stia commettendo double spending. 
+3. Si controlla che la transazione non sia già nel transaction pool.
+4. Si controlla che lo script di output sia in una whitelist di script (facoltativo).
+
+Nessuna regola ci garantisce che tutti i nodi seguano tutti questi step, che servono a mantenere la rete sana. Un nodo potrebbe eseguire un client che non segua nessuna regola, essendo un sistema decentralizzato, nessuno vieta che questo accada. 
+
+
+
+### Transaction pool differenti
+
+A causa della latenza di rete i transaction pool dei nodi potrebbero essere differenti. Supponiamo che $A$ provi a fare double-spending pagando $B$ e $C$ con la stessa moneta in due tx diverse. Alcuni nodi della rete conosceranno $A \to B$ e rifiuteranno $A \to C$ ed altri viceversa. Come risultato, i nodi saranno discordanti su quale delle tx dovrebbe andare nella blockchain. Questa prende il nome di **race condition**. Ovviamente a stabilire la transazione vincente sarà il miner che proporrà il successivo blocco. Supponendo che vinca la tx con $A \to B$, allora i nodi che la contenevano scarteranno la tx dal transaction pool, essendo già nella blockchain, mentre chi conteneva $A \to C$ scarterà la tx dal transaction pool poiché tentativo di double spending. Solitamente i nodi tengono la transazione che arriva prima, e questo fa pensare che la posizione del nodo della rete e la sua connettività con il resto dei nodi conti, ma ciò non toglie che questo comportamento non è forzato da nessuna autorità centrale, e i nodi potrebbero muovere le tx dal transaction pool in base ad altri criteri (es. priorità alle tx con fee più alte), 
+
+
+
+### Zero confirmation tx e replace-by-fee
+
+Una **zero confirmation transaction** è una tx che non è inclusa in alcun blocco, e che rischia di diventare un double spending. Nel 2013, alcuni partecipanti alla rete hanno espresso il loro interesse nell'includere un meccanismo per rimpiazzare le tx nel pool in base alla generosità del loro fee. Tuttavia, questo potrebbe rendere il double spending molto più semplice (basta mandare due tx con fee molto diverse). Bitcoin ha inserito un meccanismo opzionale di replace-by-fee, dove le tx possono auto-marcarsi come sostituibili in caso di fee più alte. 
+
+
+
+### Propagazione del blocco
+
+Quando un miner trova un blocco deve propagarlo, ed il processo è quasi analogo alla propagazione delle transazioni, con lo stesso problema delle race conditions (più blocchi proposti allo stesso momento). Il blocco che viene incluso nella blockchain è ovviamente quello che viene esteso di più, seguendo il criterio del longest branch. Per validare un blocco bisogna: 
+
+1. Validare il suo header, assicurandosi che abbia risolto il puzzle correttamente.
+2. Validare ogni transazione contenuta nel blocco.
+3. Assicurarsi che estenda il branch più lungo della blockchain. 
+
+Anche in questo caso nessuno ci assicura che i nodi si comportino esattamente in questo modo. 
+
+
+
+### Latenza dell'algoritmo di flooding 
+
+La latenza dell'algoritmo di flooding è proporzionale alla dimensione del blocco, dato che il throughput della rete è il collo di bottiglia del sistema. Il seguente grafico mostra il tempo impiegato alla propagazione del blocco in relazione alla sua dimensione. In media il blocco raggiunge il 50% dei nodi in ~3-5s, ed il 90% dei nodi in ~10-15s.  
+
+![image-20220401172904404](Ch_3_meccanica_dei_bitcoin.assets/image-20220401172904404.png)
+
+### Grandezza della rete
+
+La grandezza della rete è difficile da determinare, essendo altamente dinamica. Si stimano circa 1 mln di IP diversi connessi alla rete in un mese, ma solo 5000-10000 nodi rimangono in maniera permanente nella rete per validare le transazioni. Questo numero non sembra crescere o decrescere nel tempo.  
+
+
+
+
+
+
+
+
+
+
+
