@@ -1,6 +1,6 @@
-# Meccanica dei Bitcoin
+# Bitcoin Engineering.
 
-In questo capitolo copriremo nello specifico l'implementazione dei meccanismi di Bitcoin. 
+[TOC]
 
 
 
@@ -46,7 +46,7 @@ Anche gli output sono degli array. Ogni output ha 2 campi ed ogni output ha un v
 
 
 
-## Bitcoin scripts
+## Il linguaggio Script
 
 Il campo ScriptPubKey di ogni output nella transazione non specifica una public key, ma bensì uno script. In realtà, anche il campo SigScript degli input contiene uno script e non la mera firma di chi spende i bitcoin. Per capire se un input è corretto, basta concatenare al suo campo SigScript il campo ScriptPubKey dell'output della transazione precedente. Se l'esecuzione dello script finale ritorna true, allora l'input è lecito.  
 
@@ -100,7 +100,7 @@ Nello stack ci saranno anche i dati necessari ad eseguire il complesso script. P
 
 
 
-## Applicazioni di Script
+## Le applicazioni di Script
 
 Vediamo alcune delle più comuni applicazioni realizzabili con il linguaggio Script. 
 
@@ -130,7 +130,7 @@ Che succede se l'operatore decide di non firmare nessun micropagamento? I bitcoi
 
 
 
-## Bitcoin blocks
+## La struttura dei blocchi
 
 Le transazioni sono raggruppate in blocchi. Questa è una ottimizzazione, per vari motivi: 
 
@@ -156,7 +156,7 @@ L'**header** contiene informazioni relative al **mining puzzle**, ad esempio la 
 
 
 
-## La rete Bitcoin
+## Specifiche della rete Bitcoin
 
 La rete Bitcoin è una rete p2p che gira su TCP. Ha una topologia random e dinamica, dove i nodi sono connessi tra loro **in maniera casuale**. Nuovi nodi possono entrare a far parte della rete in qualsiasi momento, e possono altrettanto uscire da essa in qualsiasi momento. Non c'è una procedura da seguire per uscire dalla rete: semplicemente, quando i peer non ricevono segnali da un nodo per **3 ore consecutive** assumono che il nodo non sia più in rete (**oblio**). 
 
@@ -214,6 +214,63 @@ La latenza dell'algoritmo di flooding è proporzionale alla dimensione del blocc
 ### Grandezza della rete
 
 La grandezza della rete è difficile da determinare, essendo altamente dinamica. Si stimano circa 1 mln di IP diversi connessi alla rete in un mese, ma solo 5000-10000 nodi rimangono in maniera permanente nella rete per validare le transazioni. Questo numero non sembra crescere o decrescere nel tempo.  
+
+
+
+## I nodi della rete
+
+Possiamo distinguere due tipi di nodi nella rete: **full node** e **lightweight node**. 
+
+
+
+### Full node
+
+Un **full validating node** è permanentemente connesso alla rete per ricevere tutte le transazioni Bitcoin. Più passa tempo sconnesso, più transazioni deve recuperare per mettersi in pari. Questi nodi conservano l'intera blockchain e necessitano di una buona connessione per ricevere ed inviare transazioni e blocchi. Attualmente (2022) la dimensione della blockchain è di circa 400 GB. Per validare velocemente le transazioni, un full node dovrebbe tenere in memoria principale tutte le UTXO. Così facendo, il nodo esegue lo script e controlla che la transazione entrante sia valida prima di inserirla nella tx-pool, senza dover scorrere a ritroso nella blockchain. Conservare le UTXO impiega all'incirca qualche GB di memoria. 
+
+
+
+### Lightweight node
+
+La maggior parte dei nodi nella rete Bitcoin sono lightweight, ovvero nodi che non contengono l'intera blockchain, non fanno mining e che non si occupano in generale della salute della rete. Un esempio sono i [**Simplified Payment Verification** client (SPV)](https://wiki.bitcoinsv.io/index.php/Simplified_Payment_Verification). Questi nodi scaricano solitamente i block header della blockchain (circa 400MB totali, rapporto 1:1000 con il peso della blockchain) e le transazioni che presentano movimenti ai propri indirizzi. Possono verificare che un certo blocco abbia risolto il puzzle, ma non possono verificare che le transazioni contenute siano valide, non essendo in possesso di tutta la blockchain o della lista delle UTXO. I lightweight node affidano la sicurezza ai full node (che sono quasi con certezza miners, e quindi hanno interesse a produrre blocchi validi). 
+
+
+
+## Limiti di Bitcoin e come aggiornarlo
+
+Alcuni parametri e limiti di Bitcoin sono stati imposti durante la creazione, e sono: 
+
+* Tempo medio di creazione di un blocco ($\sim 10$ min)
+* La grandezza massima del blocco (1 MB)
+* Il massimo numero di operazioni di firma in un blocco (20k)
+* La divisibilità della valuta (1 satoshi)
+* Il numero totale di Bitcoin (23 mln)
+* La struttura dei block reward (dimezza ogni 4 anni)
+
+I block reward ed il numero totale di Bitcoin con altissima probabilità non cambieranno, poiché le implicazioni economiche sono troppo grandi. Con queste assunzioni il throughput del sistema è molto basso, se in media una transazione è grande 250 byte, ed un blocco ha una dimensione massima di 1 MB, allora in un blocco ci staranno in media 4000 transazioni. Se un blocco viene creato circa ogni 10 minuti, allora Bitcoin processa in media 7 transazioni al secondo. Cambiare queste costanti implicherebbe problemi di sicurezza di cui parleremo nel prossimo capitolo. Un altro problema riguarda gli algoritmi di crittografia utilizzati (ECDSA su curva secp256k1, SHA256), che potrebbero dover essere cambiati col passare degli anni. 
+
+L'aggiornamento del protocollo Bitcoin è complesso a causa della natura distribuita: non si può assumere che tutti i nodi scarichino l'aggiornamento istantaneamente. Un aggiornamento al software di Bitcoin ha diverse conseguenze. Divideremo i tipi di aggiornamenti in **soft fork** e **hard fork**. 
+
+
+
+### Hard fork
+
+Un hard fork è un aggiornamento che introduce nuove feature prima considerate **non valide**. La nuova versione considererà validi alcuni blocchi che la vecchia versione avrebbe respinto. Consideriamo il caso in cui la maggior parte dei nodi nella rete hanno effettuato l'aggiornamento: 
+
+* il **longest branch** della blockchain contererà dei blocchi che verranno considerati non validi dai nodi non aggiornati. 
+* I nodi non aggiornati continueranno a lavorare su un branch della blockchain che esclude i nodi con le nuove feature, creando un proprio "longest branch". 
+
+Questo tipo di aggiornamento prende il nome di hard-forking, poiché divide la blockchain in due rami: uno seguito dai nodi aggiornati, l'altro dai nodi non aggiornati. 
+
+> Il fix del bug di MULTISIG necessiterebbe di una hard fork per essere fixato: nel caso in cui fosse fissato, non servirebbe inserire un dato in più nello stack per i software aggiornati. Tuttavia i software vecchi andrebbero in errore poiché il bug è ancora presente.  
+
+### Soft fork
+
+Un soft fork è un aggiornamento che rende le regole di validazione **più stringenti**. Di conseguenza, i nodi aggiornati non accetteranno alcuni blocchi che i nodi non aggiornati avrebbero accettato. Supponiamo che la maggior parte dei nodi siano stati aggiornati:
+
+* I nodi aggiornati respingeranno alcune transazioni. 
+* I miners non aggiornati vedranno i propri blocchi creati venir respinti dalla rete, quindi si accorgeranno con alta probabilità che qualcosa non va, e procederanno all'aggiornamento del software. 
+
+Le soft fork evitano la divisione in branch provocata dagli hard fork, bensì producono dei mini fork temporanei. Un esempio di soft fork è l'introduzione del P2SH (Pay to Script hash).
 
 
 
