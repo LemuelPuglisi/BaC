@@ -55,16 +55,18 @@ Un **hierarchical deterministic wallet** permette al cold storage di utilizzare 
 3. In maniera simile, possiamo generare la corrispondente sequenza di chiavi private utilizzando la `private key generation info`.
 4. La $i$-esima chiave della sequenza delle chiavi controlla l'$i$-esimo indirizzo della sequenza di indirizzi. 
 
+![image-20220407083628068](Ch_5_conservazione_dei_bitcoin.assets/image-20220407083628068.png)
+
 La `address generation info` non travisa nessuna informazione sulla generazione delle corrispondenti chiavi private, quindi può essere tranquillamente conservata nell'hot storage. Detto questo, potremmo anche fornire questa informazione a qualcuno, in modo che questo possa generare l'$i$-esimo indirizzo. Vediamo come funziona tutto ciò con ECDSA: 
 
-1. Siano $k, x, y$  tre numeri random. 
+1. Siano $k, y$  due numeri random. 
 2. Il `private key generation info` è $(k, x, y)$
 3. La $i$-esima chiave è $x_i = y + H(k \mid\mid i)$
 4. L'`address generation info` è $(k, g^y)$
-5. Quindi la $i$-esima public key si ottiene come $g^{x}i = g^{H(k\mid\mid i)} \cdot g^y$
-6. E l'$i$-esimo indirizzo come $H(g^{x}i)$
+5. Quindi la $i$-esima public key si ottiene come $g^{x_i} = g^{H(k\mid\mid i)} \cdot g^y$
+6. E l'$i$-esimo indirizzo come $H(g^{x_i})$
 
-> PAGINA 135
+Questo schema ha le proprietà desiderate, più una nuova: le public key sono scorrelate l'una con l'altra, quindi è impossibile capire se due public key provengano dallo stesso wallet.  Attraverso questa tecnica, mantenendo l'address generation info nell'hot storage è possibile trasferire Bitcoin in indirizzi sempre nuovi nel cold storage, e se l'hot storage viene compromesso, le chiavi nel cold storage saranno comunque al sicuro. 
 
 
 
