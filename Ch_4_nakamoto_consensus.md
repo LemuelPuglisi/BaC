@@ -291,3 +291,39 @@ Contro riscontrati:
 * Costosa (in termini di risorse)
 * Nessuna garanzia a lungo termine
 * Tanti attacchi proposti in letteratura (nessuno visto in pratica)
+
+
+
+## 51% attack
+
+> Articolo di [binance.com](https://academy.binance.com/it/articles/what-is-a-51-percent-attack)
+
+![Cos'è un 51% Attack?](Ch_4_nakamoto_consensus.assets/91791d8c1e594f9a92f421aa7e07720c.png)
+
+Un attacco del 51% è un potenziale attacco a Bitcoin (o altri  network sulla blockchain), in cui una singola entità o organizzazione  riesce a prendere il controllo della maggioranza dell’hash rate,  causando potenziali disturbi. In altre parole, la parte attaccante  avrebbe sufficiente mining power per escludere intenzionalmente delle  transazioni o modificarne l’ordine.
+
+Un attacco di questo tipo consentirebbe all’attaccante di provare a  invertire transazioni che ha effettuato mentre era in controllo,  portando probabilmente a un double-spending. Un majority attack di  successo permetterebbe all’attaccante di impedire la conferma di alcune o di tutte le transazioni(aka. transaction denial of service) o di  impedire il mining di alcuni o di tutti gli altri miner, portando al  cosiddetto monopolio di mining.
+
+Invece, un majority attack non permetterebbe all’attaccante  di invertire le transazioni di altre persone, né di impedire alle  transazioni di venire trasmesse al network. Altre situazioni altamente  improbabili sono modificare la ricompensa per blocco, creare monete dal  nulla e rubare monete che non sono mai appartenute all’attaccante.
+
+
+
+## Selfish mining
+
+> Articolo di [binance.com](https://academy.binance.com/it/articles/selfish-mining-explained).
+
+![Il Selfish Mining Spiegato](Ch_4_nakamoto_consensus.assets/e50cdf10ddb443589a6f512bf5819afe.png)
+
+L'esplorazione più esaustiva del selfish mining può essere trovata nel documento del 2013 [*Majority is not Enough: Bitcoin Mining is Vulnerable*](https://arxiv.org/pdf/1311.0243.pdf) dei ricercatori Ittay Eyal e Emin Gun Sirer. La tesi del documento è  che, al contrario di quanto si crede, gli incentivi per i miner di  Bitcoin sono imperfetti e potrebbero portare eventualmente alla  centralizzazione del network.
+
+Dimostriamo il selfish mining con un esempio. Supponiamo che l'hash rate totale sia diviso equamente tra 4 miner. Alice, Bob, Carol e Dan  (ciascuno con il 25%). Alice, Bob e Carol seguono le regole, ma Dan sta  cercando di sfruttare il sistema a suo favore.
+
+In circostanze normali, ci aspetteremmo che il miner che trova un blocco lo aggiunga immediatamente alla catena. E questo è ciò che fanno Alice, Bob e Carol come partecipanti onesti. Tuttavia, se Dan trova un blocco, lo trattiene (è una soluzione valida, ma deve ancora essere aggiunta).  Dan potrebbe avere fortuna e trovare due blocchi di fila prima degli  altri miner.
+
+Supponiamo che siano stati minati 100.000 blocchi. Quindi ora abbiamo  Alice, Bob e Carol che cercano di proporre il blocco numero 100.001. Dan lo trova ma tiene privata questa informazione. Ora ci sono due catene,  quella pubblica e quella segreta (e *più lunga*) di Dan. Mentre gli altri stanno ancora tentando di trovare il blocco 100.001, Dan trova il 100.002.
+
+La catena di Dan è ora avanti di due blocchi. Se la sua fortuna non si  esaurisce e riesce a rimanere sempre avanti rispetto all'altra catena  con questa distanza, Dan continua. Quando gli altri recuperano arrivando ad essere solo un blocco indietro, lui rivela la sua catena.
+
+La catena, ora pubblica, di Dan è *più lunga* rispetto a quella su cui gli altri partecipanti stavano lavorando. Secondo la regola che chiamiamo *regola della catena più lunga*, la catena “corretta” su cui lavorare è quella che ha accumulato più [Proof-of-Work](https://academy.binance.com/it/articles/proof-of-work-explained) (un parametro definito anche con il termine *chainwork*). Quindi, se un nodo rileva una catena con un maggior lavoro accumulato,  inizierà a dedicare potenza di mining a questa catena più lunga.
+
+Ora, Alice, Bob e Carol vedono la catena di Dan – ora la riconoscono  come la catena da seguire. Qualsiasi ricompensa che avrebbero guadagnato sull'altra catena non esiste più. E dato che Dan ha aggiunto quei  blocchi alla catena corrente, si tiene tutte le ricompense.
