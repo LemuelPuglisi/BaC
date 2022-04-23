@@ -73,6 +73,11 @@ Decentralizzare protocolli del genere è difficile, tanto da pensare che l'idea 
 
 
 
+> **Blind signature**
+> Supponiamo che Alice voglia far firmare a Bob un messaggio $m$, senza far conoscere $m$. Alice applica a $m$ una funzione $f$ con particolari proprietà. Sia $c=f(m)$, Alice invia $c$ a Bob. Quest'ultimo calcola la firma $c'=g(c)$, ovvero $c'= g(f(m))$ ed invia la firma $c'$ ad Alice. La proprietà particolare di $f$ è che $g(f(m))=g(m)$ e quindi $c' = g(m)$ è la firma di $m$.
+
+
+
 ## Deanonimizzare Bitcoin
 
 Supponiamo che Alice voglia comprare una teiera da 8 BTC. Supponiamo che i suoi BTC siano in 3 separati UTXO rispettivamente con 3, 6 e 5 BTC. Alice deve combinare due UTXO per pagare la teiera:
@@ -123,6 +128,86 @@ Le tecniche di deanonimizzazione si basano sulla **transaction graph analysis**,
 ### Network layer deanonimization
 
 La network layer deanonimization è una tecnica che non sfrutta l'analisi del grafo delle transazioni, bensì la rete su cui esse viaggiano. Il criterio afferma che con alta probabilità, chi trasmette per primo la transazione è proprio il creatore di quest'ultima. Se un insieme sufficientemente grande di nodi collude, allora potrebbero smascherare il primo nodo che trasmette una specifica transazione. In questo modo, verrebbe collegato indirizzo Bitcoin all'indirizzo IP del nodo, che facilmente si collega ad una identità reale. Il problema viene parzialmente risolto utilizzando **Tor**, che permette una comunicazione anonima per Internet basata sul protocollo di rete di onion routing. Tor è pensato per navigazione a bassa latenza, quindi è un trade-off tra anonimità e performance. Essendo Bitcoin ad alta latenza, potremmo utilizzare sistemi che garantiscono meglio l'anonimità sulla rete, come le **mix-net**.
+
+
+
+### Onion routing
+
+L'onion routing è la tecnica di anonimizzazione utilizzata in una rete onion. I messaggi sono incapsulati in strati di crittografia (paragonati agli strati della cipolla). Il dato cifrato viene trasmesso attraverso una serie di nodi, chiamati onion router, ognuno dei quali "sbuccia" via un singolo strato di crittografia, scoprendo così chi è il prossimo nodo di destinazione del dato. Il mittente rimane anonimo perché ciascun intermediario conosce solo la posizione del nodo immediatamente precedente e di quello immediatamente successivo.  
+
+
+
+## Mixing
+
+Lo scopo di un servizio di mixing è quello di indebolire la transaction graph analysis. L'idea è quella di utilizzare un intermediario per effettuare una transazione, in modo da non collegare mittente e destinatario direttamente nel transaction graph.
+
+
+
+### Online wallets as Mixes
+
+I wallet online permettono di depositare Bitcoin e di prelevarli successivamente. Al prelievo, i coin non saranno gli stessi di quelli depositati. Gli online wallet potrebbero essere considerati servizi di mixing. Tuttavia, dobbiamo considerare che:
+
+* Non garantiscono che avvenga il mixing 
+* (quindi) il meccanismo di mixing potrebbe essere sostituito
+* Per motivi legali tracciano i collegamenti depositi-prelievi
+* Molto spesso conoscono la vera identità dell'utente
+
+Per i motivi sopracitati, usare un online wallet come servizio di mixing ci porrebbe in una posizione peggiore rispetto a quella precedente. L'anonimato fornito dagli online wallet è lo stesso di quello fornito dalle banche: un'entità centralizzata che conosce le nostre transazioni. Se un online wallet viene hackerato, le conseguenze sono peggiori rispetto alla controparte bancaria: gli indirizzi verrebbero collegati alle identità reali, e dato che la blockchain è pubblica, si potrebbe consultare per tracciare le loro transazioni. 
+
+
+
+### Servizi di Mixing dedicati (mixer)
+
+I servizi di mixing dedicati, anche chiamati **mixer** (o laundry), promettono di non tener traccia dei collegamenti tra depositi e prelievi e di non richiedere l'identità reale dell'utente. Nella pratica si inviano i Bitcoin al servizio di mixing indicando un indirizzo di destinazione, e si attende che il servizio effettui la transazione. Nulla vieta al mixer di non inviare i Bitcoin all'indirizzo di destinazione, per cui bisogna fidarsi del servizio.
+
+
+
+### Linee guida per il mixing
+
+Presentiamo delle linee guida per aumentare il grado di anonimato fornito dai mixer, e per incrementare la fiducia degli utilizzatori.
+
+1. **Utilizzare una serie di mix.** Il primo principio è quello di utilizzare una serie di mix uno dopo l'altro.
+2. **Utilizzare transazioni uniformi.** Usare tagli standard (ognuno dei quali è chiamato **chunk size**) permette di uniformare le transazioni che partecipano al mixing, rendendole più difficili da distinguere ed incrementando l'anonimity set.
+3. **Il client dovrebbe essere automatizzato.** L'automatismo provvisto da un software, come un privacy-friendly wallet, difende da attacchi basati sul timing delle transazioni. 
+4. **Le mixing-fees dovrebbero essere All-or-Nothing.** I servizi di mixing vogliono essere pagati. Le mixing fees potrebbero essere percentuali detratte dalle chunk-size, ma a questo punto non si avrebbe più una grandezza standard. Una soluzione migliore consiste nel settare la probabilità che il mixer si tenga l'intero chunk, ad esempio lo 0.001%, 1 chunk su ogni 1000 trasmessi. Il chunk sfortunato andrà interamente al mixer. Risulta difficile garantire agli utenti che tale probabilità sia rispettata, e che il mixer non prenda più chunk di quanto ne millanti. Una soluzione è data da Mixcoin, un paper del 2014 prodotto da Bonneau. 
+
+
+
+### Il mixing nella pratica
+
+Nella pratica non sono stati realizzati sistemi di mixing stabili. Il problema consiste nel bootstrapping di un mixer, che non garantisce molto finché non ha un bacino di utilizzatori consistente. Inoltre alcuni mixer sono stati colti a rubare Bitcoin.
+
+
+
+### Mixing decentralizzato
+
+Un protocollo di mixing decentralizzato si allinea con la filosofia di Bitcoin. L'idea è quella di sviluppare un protocollo peer-to-peer in cui un gruppo di utenti possono fare mixing dei loro coin. Il protocollo non avrebbe problemi di bootstrapping e (teoricamente) non sarebbe possibile effettuare furti. Il mixing decentralizzato provvede migliore anonimato, ed un esempio è la proposta CoinJoin. 
+
+
+
+#### CoinJoin
+
+CoinJoin è la proposta principale di mixing decentralizzato. Utenti differenti si uniscono per creare una singola transazione combinando tutti i loro input, e firmano i rispettivi. Ogni utente indica l'indirizzo di input (UTXO) e quello di output. L'ordine degli input e degli output è permutato randomicamente. L'utente controlla che l'output sia incluso nella transazione condivisa e che esso riceva il numero di Bitcoin prestabilito (meno le tx fees), e dopodiché procede a firmare la transazione. Chi osserva la tx nella blockchain, non saprà il mapping tra gli input e gli output. Gli utenti dovrebbero ripetere più round di mixing e assicurarsi che la chunk size sia quella standard. 
+
+![image-20220423105523250](Ch_6_bitcoin_e_anonimità.assets/image-20220423105523250.png)
+
+Gli step del protocollo CoinJoin sono i seguenti: 
+
+1. Cercare i peer che vogliono effettuare mixing
+2. Scambiare gli indici di input e output
+3. Costruire la transazione (svolta da un peer qualunque)
+4. Inviare la tx ad ogni partecipante ed attendere la firma
+5. Inviare la tx firmata in broadcast
+
+Il primo step può essere supportato da un server che fa da hub tra chi vuole effettuare mixing. I peer proseguiranno poi da soli. Servono protocolli di anonimizzazione affinché durante la comunicazione di input e output agli altri peer non venga svelata la nostra transazione (es. usare Tor). Così definito, il protocollo è debole contro attacchi di **Denial of Service**, che non permettono il suo completamento: un utente potrebbe partecipare alla prima fase, ma rifiutarsi di firmare la transazione, oppure firmare e cercare di effettuare double spending con lo stesso input. Per impedire questo tipo di attacco, si propone l'imposizione di un costo per partecipare al protocollo (es. proof of work, o proof of burn su un piccolo quantitativo di Bitcoin).
+
+
+
+#### High level flows
+
+Supponiamo che Alice riceva mensilmente il suo salario di $x$ BTC e che depositi una percentuale fissata di questo nel suo fondo pensionistico. Anche usando le tecniche di mixing, è possibile sfruttare la periodicità di queste transazioni per collegare i due indirizzi. Questo tipo di pattern viene chiamato **high level flow** (flusso di alto livello). Un modo per rompere il pattern è chiamato **merge avoidance**: anziché unire i singoli input per pagare un certo prezzo, vengono specificati $N$ indirizzi di output su cui effettuare pagamenti con singoli input la cui somma corrisponde al prezzo. Affinché funzioni, il ricevente deve evitare di combinare le monete ricevute in un'unico indirizzo. La merge avoidance evita che gli indirizzi siano clusterizzati a causa delle transazioni in cui essi risultano sfruttati insieme.
+
+![image-20220423112120130](Ch_6_bitcoin_e_anonimità.assets/image-20220423112120130.png) 
 
 
 
