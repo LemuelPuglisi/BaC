@@ -148,6 +148,30 @@ Una prova di conoscenza per una relazione $R$ è un protocollo a due parti con u
 
 
 
+### Protocollo di Schnorr
+
+Il protocollo di Schnorr è una delle proof of knowledge più famose, ed è una proof of knowledge del logaritmo discreto. Il protocollo è definito per un gruppo ciclico $G_q$ di ordine $q$ con un generatore $g$. Per provare la conoscenza di $x = \log_g y$, il prover $P$ interagisce con il verifier $V$ come segue: 
+
+1. $P$ sceglie un esponente random $r$, calcola $R=g^r$ (*commitment*) e lo invia a $V$.  
+2. $V$ sceglie un esponente random $c$ (*challenge*) e lo invia a $P$
+3. $P$ calcola $z=(r+cx \mod q)$ (*response*) e invia $z$ a $V$
+4. $V$ accetta se $g^z = Rh^c$. 
+
+La prova è completa e valida, infatti è semplice dimostrare che esiste un extractor che funzioni nella seguente maniera: 
+
+1. Simuliamo il momento in cui $P$ invia $R= g^r$, diciamo che $P$ è allo stato $Q$. 
+2. Generiamo un valore random $c_1$ che dato in input a $P$ ci ritorna $s_1 = r + c_1 x$
+3. Rewind allo stato $Q$, inviamo un altro valore random $c_2$, stavolta otteniamo $s_2 = r +c_2 x$ 
+4. L'extractor da in output $(s_1-s_2)(c_1-c_2)^{-1}$. 
+
+Dimostriamo che l'output è esattamente $x$: 
+$$
+(s1-s_2) = (r+ c_1x) - (r+ c_2x) = x(c_1 - c_2)
+$$
+Quindi avremo: 
+$$
+(s_1-s_2)(c_1-c_2)^{-1} = x(c_1 - c_2)(c_1-c_2)^{-1} = x
+$$
 
 
 
