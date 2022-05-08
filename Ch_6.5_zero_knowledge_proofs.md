@@ -118,30 +118,37 @@ Osserviamo che $V$ non può estrarre $x$ dal passo $4$, non conoscendo $r$.
 
 > TODO: dimostrare completeness, soundness e zero-knowledge. 
 
-### 
-
-## ZKP of knowledge
-
-> Anche chiamate prove di conoscenza. 
-
-Nelle ZKP of knowledge dimostriamo al verifier di conoscere una determinata informazione. 
 
 
+## Proof of knowledge
 
-> `VERSIONE PRECEDENTE`
->
-> ## Prove di conoscenza
->
-> Supponiamo di voler dimostrare a qualcuno di conoscere qualcosa, evitando che la nostra conoscenza possa essere trasferibile. Le domande da porsi sono: 
->
-> * Cosa vuol dire conoscere qualcosa?
-> * Come possiamo formalizzare questo concetto?
->
-> Consideriamo le relazioni in NP: Informalmente, NP è la classe dei linguaggi L che ammettono una funzione (relazione) polinomiale $\rho$ tale che: 
-> $$
-> \forall x \in L, \exist y : \rho(x,y)=1
-> $$
-> Anche in questo contesto la prova di conoscenza è definita da un verificatore. Richiediamo una proprietà di completezza ed una proprietà di zero-knowledge. Il problema è la **condizione di conoscenza**. Richiediamo l'esistenza di un algoritmo **estrattore** $E$, che ha accesso ad $x \in L$ e, via oracolo, alla strategia di $P$. L'algoritmo $E$ può interagire con la randomness utilizzata da $P$ e con $P$. $E$ è diverso da $V$ in quanto può eseguire $P$ più volte costringendolo a utilizzare sempre la stessa randomness. $E$ deve restituire $y$ tale che $\rho (x,y) = 1$. Formalizzare il concetto di prova di conoscenza è ben più complicato. Qui ci siamo limitati a descrivere l'aspetto più intuitivo del problema. 
+> Anche chiamate **prove di conoscenza**. 
 
-`continuare con appunti presi in aula.`
+In crittografia, una proof of knowledge (prova di conoscenza) è una prova interattiva in cui il prover ha successo se riesce a convincere il verifier di sapere qualcosa. Cosa significa per una macchina "sapere qualcosa" è definito in termini di computazione. Una macchina 'sa qualcosa', se questo qualcosa può essere calcolato, data la macchina come input. Se la prova di conoscenza è zero-knowledge, allora il prover riesce a dimostrare il tutto senza fare acquisire informazioni (che non può calcolare da solo) al verifier. Per catturare l'idea, bisogna introdurre un programma chiamato extractor $E$, di cui parleremo durante le proprietà. Siamo perlopiù interessati a programmi polinomialmente limitati.
+
+
+
+### Approfondimenti e proprietà
+
+Sia $x$ uno statement del linguaggio $L \in NP$ e sia $W(x)$ l'insieme di witness per $x$ che possono essere accettati nella dimostrazione.  
+
+> **Cosa è una witness?** [Da StackExchange](https://crypto.stackexchange.com/questions/43462/what-is-a-witness-in-zero-knowledge-proof).
+> Una witness per uno statement NP è un pezzo di informazione che permette di verificare efficientemente che lo statement è vero. Per esempio, se lo statement afferma che esiste un ciclo hamiltoniano in un grafo, la witness potrebbe essere proprio il ciclo. Dato il ciclo, si potrebbe efficientemente verificare se il ciclo è hamiltoniano, ma trovare tale ciclo è difficile. 
+
+Nelle proof of knowledge, il prover non deve dimostrare che un certo statement è vero, ma deve dimostrare di conoscere una witness per lo statement. Una macchina che conosce qualcosa (una witness) è definita dall'esistenza di un programma extractor che, utilizzando la macchina come oracolo, riesce a dare in output la witness posseduta dalla macchina. 
+
+Adesso che è chiaro cosa siano le witness, possiamo definire la seguente relazione $R$: 
+$$
+R = \{ (x,w) : x \in L, w \in W(x) \}
+$$
+Una prova di conoscenza per una relazione $R$ è un protocollo a due parti con un prover $P$ ed un verifier $V$ che segue le seguenti due proprietà:
+
+* **Completezza** (*Completeness*): Se $(x,w) \in R$, ovvero lo statement è vero, allora il prover $P$ che conosce la witness $w$ per $x$ riesce a convincere $V$ della sua conoscenza. Più formalmente, data l'interazione tra $P$ e $V$, la probabilità che il verificatore sia convinto è 1. 
+* **Validità** (*Validity*): Tale proprietà richiede che la probabilità che un programma extractor $E$ riesca ad estrarre la witness $w$, dato un oracolo per l'accesso ad un prover $\tilde{P}$ possibilmente disonesto, deve essere almeno alta quanto la probabilità che $\tilde{P}$ riesca a convincere il verificatore. Questa proprietà garantisce che nessun prover che non conosce alcuna witness può avere successo nel convincere il verifier. 
+
+
+
+
+
+
 
