@@ -64,7 +64,7 @@ La funzione $\text{commit}$ prende in input un messaggio ed un valore randomico 
 1. **Hiding**: dato il commitment $com$, deve essere computazionalmente difficile trovare $msg$. 
 2. **Binding**: deve essere comp. difficile trovare due coppie $(msg, nonce)$ e $(msg', nonce')$ tali che $msg \ne msg'$ e $\text{commit}(msg, nonce) = \text{commit}(msg', nonce')$.  
 
-Per utilizzare lo schema di commitment, prima di tutto generiamo la stringa random segreta $nonce$, dopodiché la passiamo insieme al messaggio alla funzione commit, che genera il commitment. Pubblichiamo quindi il commitment ottenuto. Se ad un certo punto vogliamo che svelare agli altri il messaggio dentro il commitment, pubblichiamo il $nonce$ ed il messaggio, cosicché gli altri potranno verificare se il commitment contenesse tali informazioni attraverso l'algoritmo di verify.  
+Per utilizzare lo schema di commitment, prima di tutto generiamo la stringa random segreta $nonce$, dopodiché la passiamo insieme al messaggio alla funzione commit, che genera il commitment. Pubblichiamo quindi il commitment ottenuto. Se ad un certo punto vogliamo svelare agli altri il messaggio dentro il commitment, pubblichiamo il $nonce$ ed il messaggio, cosicché gli altri potranno verificare se il commitment contenesse tali informazioni attraverso l'algoritmo di verify.  
 
 > Ogni volta che si genera un commitment, è importante utilizzare un valore random nonce differente. In crittografia, il termine **nonce** si utilizza per i valori che vanno utilizzati una sola volta.
 

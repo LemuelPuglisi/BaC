@@ -176,3 +176,92 @@ $$
 
 
 
+# Zerocoin e Zerocash
+
+Anziché proporre soluzioni di anonimato costruite al di sopra del protocollo, cryptocurrency come Zerocoin e Zerocash incorporano l'anonimato nel protocollo. Questi protocolli non sono compatibili con Bitcoin, al contrario dei servizi di mixing. Mentre Zerocoin può essere implementato attraverso una soft fork di Bitcoin, Zerocash richiede addirittura la creazione di una altcoin (alternative to Bitcoin). La garanzia di anonimato si basa sui limiti computazionali dell'avversario, come molte delle primitive crittografiche. 
+
+
+
+## Zerocoin
+
+Introduciamo Basecoin (Bitcoin-like altcoin) che servirà per effettuare le transazioni vere e proprie. Zerocoin è un meccanismo che permette di ripulire le basecoin. Quello che accade è che si scambia una basecoin con uno zerocoin, e dopodiché si ri-scambia lo zerocoin con una nuova basecoin. Questo scollega le monete, quindi le ripulisce. Lo zerocoin serve a dimostrare di possedere una basecoin, rendendola di fatto non spendibile, ma non specifica quale. Per redimere una nuova basecoin a partire da uno zerocoin bisogna utilizzare delle zero-knowledge proof da sottomettere ai miners, e tali dimostrazioni devono funzionare una sola volta (altrimenti abbiamo basecoin infiniti). 
+
+
+
+### Coniare zerocoin
+
+Supponiamo che esista solo una taglia unitaria di zerocoin, e che 1.0 zerocoin valga 1 basecoin. Tutti possono coniare zerocoin, ma essi acquisiscono valore solo quando sono nella blockchain, e per metterli nella blockchain bisogna spendere 1 basecoin. Per coniare uno zerocoin bisogna effettuare uno statement crittografico (capitolo 1), il che si traduce in tre step: 
+
+1. Generare un numero seriale $S$ ed un segreto random $r$
+2. Calcolare $commit(S, r)$, il commitment per il numero seriale. 
+3. Pubblicare il commitment nella blockchain.
+
+Come vediamo nell'immagine sottostaten, la transazione che contiene il conio (mint) di uno zerocoin è firmata dall'utente e contiene in output il commitment del numero seriale dello zerocoin, mentre l'input è proprio il basecoin che si vuole "ripulire". La transazione **non rivela** il numero seriale. 
+
+![image-20220508123141956](Ch_6.5_zero_knowledge_proofs.assets/image-20220508123141956.png)
+
+Per spendere uno zerocoin e redimere un nuovo basecoin, dobbiamo provare di aver precedentemente coniato uno zerocoin. Si potrebbe fare questo andando ad aprire il commitment, ovvero rivelando sia $S$ che $r$, ma questo permetterebbe di collegarci al vecchio basecoin (calcolando il commitment e controllando gli output delle tx di mint). Il modo in cui si rompe il collegamento è utilizzando la **zero knowledge proof**. In un certo istante di tempo ci saranno vari commitment $c_1, c_2, \dots, c_n$ nella blockchain. Vediamo gli step per spendere uno zerocoin con numero seriale $S$ ed acquisire un nuovo basecoin: 
+
+1. Creare una "spend" transaction contenente $S$ insieme alla zero-knowledge proof $\pi$ dello statement "conosco una randomness segreta $r$ tale che $commit(S, r)$ è un commitment nell'insieme dei commitment $c_1, c_2, \dots, c_n$". 
+2. I miner fungono da verifier e stabiliscono se l'utente possa o meno aprire uno dei commitment all'interno della blockchain, senza aprirli realmente. 
+3. I miner controllerano anche che il numero seriale $S$ non sia stato utilizzato nelle transazioni precedenti, altrimenti si avrebbe double spending. 
+4. L'output della "spend" transaction funzionerà come un nuovo basecoin da poter spendere. Infatti, nell''output address si dovrebbe utilizzare un indirizzo da noi posseduto. 
+
+L'immagine sottostante illustra la spend transaction. Una volta redento il basecoin, non sarà più possibile utilizzare il numero seriale dello zerocoin per acquisire altri basecoin. Quindi ogni zerocoin può essere speso **una sola volta**. 
+
+![image-20220508124300646](Ch_6.5_zero_knowledge_proofs.assets/image-20220508124300646.png)
+
+
+
+### Anonimato ed efficienza
+
+Osserviamo che durante tutto il processo il segreto $r$ non è mai rivelato, questo impedisce di calcolare il commitment attraverso il numero seriale $S$, e dunque di collegare la spend transaction con la mint transaction, ovvero garantisce l'**unlinkability**, che insieme alla pseudonimity definiscono l'anonimato. Dal punto di vista dell'**efficienza**, intuitivamente la zero knowledge proof contenuta nella spend transaction dovrebbe aumentare linearmente con il numero di commitment contenuti nella blockchain, riferendosi proprio ad essi. Tuttavia, gli autori sono riusciti a limitare il tutto ad una crescita logaritmica rispetto ai commitment. Rispetto a Bitcoin, Zerocoin introduce ovviamente delle inefficienze, che baratta per la garanzia di anonimato. 
+
+
+
+### Trusted setup
+
+Uno degli strumenti crittografici utilizzati per costruire Zerocoin, chiamato [accumulatore RSA](https://blog.goodaudience.com/deep-dive-on-rsa-accumulators-230bc84144d9), richiede un trusted setup da fare una sola volta per far partire tutti il sistema. Il setup consiste nello scegliere due grossi primi $p$ e $q$ (trapdoor) e calcolare il parametro pubblico $N$. Una volta calcolato, i parametri $p,q$ dovrebbero essere distrutti, altrimenti chi ne è in possesso potrebbe generare infiniti zerocoin.  
+
+
+
+### RSA Accumulator Quick overview
+
+```python
+import random
+
+class RSAAcc: 
+    
+    def setup(self, p, q):
+        """ Given two large prime numbers, calculate 
+        	the parameter N and u, then return the public
+        	parameters.
+        """
+        self.N = p * q
+        w = random.randint(0, N)
+        self.u = (w ** 2) % N
+        return (N, u)
+
+    def accumulate(commitments):
+        """ Create A by exponentiating u to all the commitments
+        	inside the accumulator.
+        """
+        if not self.A: self.A = self.u
+        for c in commitments:
+            self.A = self.A ** c
+		return self.A
+    
+    def gen_witness(c, commitments: Set):
+        """ Prove that a certain commitment c is in the 
+        	accumulator by computing W as the exponentiation
+        	of u by all the commitments minus c, and comparing 
+        	W to the previous computed value A.
+        """
+        commitments = commitments.remove(c)
+        W = self.u
+        for _c in commitments:
+            W = W ** _c
+        return W == self.A:
+```
+
+Supponiamo che i commitment siano $a,b,c$ e che si stia cercando di dimostrare che $d$ sia nell'accumulator, ovvero deve essere vero che $W_d^d\mod N = A$, ma dato che $A = u^{abc}$, allora per far valere l'equazione precedente dovremmo trovare $W_d = \root{d}\of{A}$, ma calcolare la radice $d$-esima è un problema computazionalmente difficile nel gruppo ciclico scelto. 
