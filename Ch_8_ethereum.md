@@ -1,6 +1,6 @@
 # Ethereum
 
-Ethereum è una cryptocurrency intesa a fornire un linguaggio di programmazione Turing-completo, utilizzabile per lo sviluppo di Smart Contracts, allo scopo di codificare vari sistemi decentralizzati (non-fungible assets, DAOs, smart propriety e molto altro). 
+Ethereum è una cryptocurrency intesa a fornire un linguaggio di programmazione Turing-completo, utilizzabile per lo sviluppo di Smart Contracts (*Dapps, Decentralized APPs*), allo scopo di codificare vari sistemi decentralizzati (non-fungible assets, DAOs, smart propriety e molto altro). 
 
 > **Intro completa dal whitepaper.**
 > The intent of Ethereum is to create an alternative protocol for building decentralized applications, providing a different set of tradeoffs that we believe will be very useful for a large class of decentralized  applications, with particular emphasis on situations where rapid  development time, security for small and rarely used applications, and  the ability of different applications to very efficiently interact, are  important. Ethereum does this by building what is essentially the  ultimate abstract foundational layer: a blockchain with a built-in  Turing-complete programming language, allowing anyone to write smart  contracts and decentralized applications where they can create their own arbitrary rules for ownership, transaction formats and state transition functions. A bare-bones version of Namecoin can be written in two lines of code, and other protocols like currencies and reputation systems can be built in under twenty. Smart contracts, cryptographic "boxes" that  contain value and only unlock it if certain conditions are met, can also be built on top of the platform, with vastly more power than that  offered by Bitcoin scripting because of the added powers of  Turing-completeness, value-awareness, blockchain-awareness and state.
@@ -40,6 +40,27 @@ L'**ether** è il principale crypto-fuel (benzina) di Ethereum, ed è utilizzato
 * **Contract account**: controllato dal contract code. Ogni volta che riceve un messaggio, il suo codice si attiva permettendogli di leggere e scrivere sul proprio storage e di inviare messaggi ad altri account o creare altri contratti. 
 
 In Ethereum, per contratto si intende un "agente autonomo" che vive all'interno della piattaforma, che esegue un codice stabilito ogni qual volta riceve un messaggio, che può controllare il proprio ether balance e molto altro.  
+
+
+
+### Esempi di contratti
+
+Vediamo alcuni esempi di contratti: 
+
+* Creazione di nuovi token ([ERC-20](https://ethereum.org/it/developers/docs/standards/tokens/erc-20/))
+* Prodotti finanziari
+* DAR ([Distinguishable Assets Registry, Contract for NFTs](https://github.com/ethereum/EIPs/issues/821))
+* DAO ([Distributed autonomous organizations](https://ethereum.org/it/dao/))
+* giochi ([CryptoKitties](https://www.cryptokitties.co/), [Sorare](https://sorare.com/))
+
+
+
+### La valuta digitale di Ethereum
+
+* ether (ETH)
+* finney - $1$ ETH = $10^3$ finney
+* szabo - $1$ ETH = $10^6$ szabo
+* wei - $1$ ETH = $10^{18}$ wei  
 
 
 
@@ -168,3 +189,92 @@ Dove `block_state` è lo stato globale contenente tutti gli account con i relati
 
 * `ADD` spila 2 item dallo stack e impila la loro somma, riduce il gas di 1 e incrementa il program counter di 1.
 * `SSTORE` spila 2 item `(a, b)` dello stack e inserisce all'indice `a` dello storage del contratto il valore `b`.
+
+
+
+## Blockchain e Mining
+
+La blockchain di Ethereum è simile alla blockchain di Bitcoin, ma ha delle differenze. Quella principale è che i blocchi di Ethereum contengono una copia sia della lista di transazioni, che dello **stato globale** più recente. Inoltre, altri due valori sono conservati nel blocco: la **difficulty** ed il **block number**. Come già sappiamo, il mining è il processo di creazione di un blocco di transazioni, da aggiungere alla blockchain di Ethereum. Al momento, Ethereum utilizza un meccanismo di consenso basato su proof-of-work, ma verrà sostituito in futuro con il proof of stake. Il mining delle transazioni su Ethereum avviene nel seguente modo: 
+
+1. Un account scrive e firma una richiesta di transazione con la propria chiave privata. 
+2. L'utente trasmette la richiesta all'intera rete Ethereum attraverso un nodo. 
+3. Ogni nodo che la riceve e la inserisce nel proprio mempool locale. 
+4. Un miner aggrega centinaia di tx in un blocco in modo da massimizzare le commissioni sulle transazioni che verranno guadagnate, rimanendo entro il limite di gas per blocco. A questo punto, il miner: 
+   1. Verifica la validità di ogni transazione, esegue il codice della richiesta cambiando lo stato della propria copia locale della EVM. Assegna la commissione sulle transazioni per ogni richiesta di transazione al proprio account. 
+   2. Inizia il processo di produzione del "certificate of legitimacy" proof-of-work per il potenziale blocco.
+5. Se il miner riesce a completare la proof-of-work, e quindi la produzione di tale certificato, allora egli trasmetterà alla rete Ethereum il blocco completo e corredato di certificato e di una checksum del nuovo stato dell'EVM dichiarato. 
+
+> Il mempool locale di un miner è l'elenco delle transazioni non ancora state inviate alla blockchain.
+
+La procedura di block validation più basilare, svolta da chi riceve il blocco proposto, consiste nel: 
+
+1. Controllare se il blocco precedente referenziato esiste ed è valido. 
+2. Controllare che il timestamp del blocco è maggiore del blocco precedente e non più avanti di 15 min. 
+3. Controllare che il block number, la difficulty, la transaction root, l'uncle root ed il gas limit (concetti low-lever di Ethereum) siano validi. 
+4. Controllare che la proof-of-work nel blocco sia valida. 
+5. Sia `S[0]` lo stato alla fine del precedente blocco
+6. Sia `TX` la lista delle $n$ tx nel blocco, allora: `S[i+1] = APPLY(S[i], TX[i])` per `i=0,...,n-1`. Se almeno una delle applicazioni da errore, o se il gas totale supera il gaslimit, ritornare errore. 
+7. Sia `S_FINAL = S[n]`, aggiungere la block reward da pagare al miner. 
+8. Controllare che la merkle tree root dello stato `S_FINAL` sia uguale allo stato conservato nel block header. Se è così, allora il blocco è valido, altrimenti è non valido. 
+
+
+
+![Ethereum apply block diagram](Ch_8_ethereum.assets/ethereum-apply-block-diagram.png)
+
+
+
+Una volta svolti tutti questi passaggi, se il blocco è valido ogni miner lo aggiunge alla propria blockchain e rimuove dalla propria mempool le transazioni che sono già state aggiunte. 
+
+Conservare l'intero stato può sembrare una inefficienza, ma bisogna evidenziare la strategia sottostante. Lo stato è memorizzato in una particolare struttura ad albero, chiamata Merkle Patricia Tree, che permette di aggiungere o rimuovere nodi, oltre che a modificare il contenuto dell'albero (i Merkle tree erano limitati a questo). Tra un blocco e l'altro della blockchain, l'albero cambia nelle piccole parti coinvolte dalle tx. La maggioranza dei nodi saranno uguali tra l'albero di un blocco e quello del precedente, per cui è possibile utilizzare dei puntatori. 
+
+
+
+> **Dove viene eseguito il codice del contratto?**
+> Ci si chiede "dove" sia eseguito il codice del contratto, in termini di hardware fisico. La risposta è semplice: l'esecuzione fa parte della funzione di transizione tra stati, che a sua volta fa parte dell'algoritmo di convalida del blocco. Quindi se una tx viene aggiunta al blocco B, l'esecuzione del codice generata da quella tx avverrà in tutti i nodi (ora e in futuro) che eseguono e convalidano il blocco B. 
+
+
+
+### Proof of work
+
+Il Proof of Work utilizzato da Ethereum è molto simile a quello di Bitcoin: il miner deve calcolare un mixHash che sia minore di una target nonce. 
+
+
+
+### Algoritmo di mining: Ethash
+
+L'algoritmo di mining di Ethereum prende il nome di **Ethash**, ed è una versione specifica dell'algoritmo di [Dagger-Hashimoto](https://eth.wiki/concepts/dagger-hashimoto). Tale algoritmo ha due obiettivi principali: 
+
+1. **ASIC-resistance**: il beneficio di creare hardware apposito per l'algoritmo deve essere più piccolo possibile, idealmente al punto tale che il profitto ricavato attraverso un ASIC sia paragonabile a quello ottenuto utilizzando delle CPU. 
+2. **Light client verifiability**: un blocco dovrebbe essere facilmente verificabile da un light client. 
+
+Il protocollo venne modificato a scapito della sua semplicità, per raggiungere un terzo obiettivo: 
+
+3. **Full chain storage**: il mining deve richiedere la conservazione dell'intera blockchain.
+
+L'algoritmo di Dagger-Hashimoto è costruito on-top di due famosi lavori: 
+
+* [Hashimoto](http://diyhpl.us/%7Ebryan/papers2/bitcoin/meh/hashimoto.pdf) - Un algoritmo che raggiunge la ASIC-resistance attraverso operazioni IO-bound. 
+* [Dagger](http://www.hashcash.org/papers/dagger.html) - Un algoritmo con memory-hard computation, ma memory-easy validation.  
+
+Ethereum utilizza kekkak256 come algoritmo di hashing, talvolta chiamato (erroneamente) SHA3. Per maggiori informazioni consultare il [repository ufficiale](https://github.com/ethereum/eth-hash).
+
+Esistono due metodi per rendere una funzione hash ASIC-resistant: 
+
+* Utilizzare molta memoria e banda, così che le nonce non possano essere calcolate in parallelo. 
+* Rendere la funzione da calcolare "general-purpose" così da evitare lo "specialised hardware". 
+
+Nello specifico: 
+
+* Sia $H_{\not n}$ il block header del nuovo blocco ma senza la nonce ed il mix-hash
+* Sia $H_n$ la nonce del block header
+* Sia $d$ un dataset molto grande necessario a calcolare il mix-hash
+* Sia $H_d$ la difficoltà del nuovo blocco
+
+Allora bisogna calcolare il mix-hash $H_m$ tale che: 
+$$
+m = H_m \and n \le \frac{2^{256}}{H_d} \hspace{1cm} (m,n) = PoW(H_{\not n}, H_n, d)
+$$
+Dove $m$ è, per l'appunto, il mix-hash ed $n$ è un valore correlato alla funzione $H$ e a $d$. L'algoritmo che calcola tali valori è il sopracitato Ethash. 
+
+
+
