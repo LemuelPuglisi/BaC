@@ -1,127 +1,173 @@
-# Ethereum
+# Ethereum 
 
-Ethereum è una cryptocurrency intesa a fornire un linguaggio di programmazione Turing-completo, utilizzabile per lo sviluppo di Smart Contracts (*Dapps, Decentralized APPs*), allo scopo di codificare vari sistemi decentralizzati (non-fungible assets, DAOs, smart propriety e molto altro). 
+[TOC]
 
-> **Intro completa dal whitepaper.**
-> The intent of Ethereum is to create an alternative protocol for building decentralized applications, providing a different set of tradeoffs that we believe will be very useful for a large class of decentralized  applications, with particular emphasis on situations where rapid  development time, security for small and rarely used applications, and  the ability of different applications to very efficiently interact, are  important. Ethereum does this by building what is essentially the  ultimate abstract foundational layer: a blockchain with a built-in  Turing-complete programming language, allowing anyone to write smart  contracts and decentralized applications where they can create their own arbitrary rules for ownership, transaction formats and state transition functions. A bare-bones version of Namecoin can be written in two lines of code, and other protocols like currencies and reputation systems can be built in under twenty. Smart contracts, cryptographic "boxes" that  contain value and only unlock it if certain conditions are met, can also be built on top of the platform, with vastly more power than that  offered by Bitcoin scripting because of the added powers of  Turing-completeness, value-awareness, blockchain-awareness and state.
-
-
-
-## Un po' di storia
-
-Negli anni '80-'90 e-cash fu' il primo protocollo anonimo di pagamento elettronico. Questo sfruttava la primitiva crittografica Chaumiam Blinding. Il protocollo fallì a causa della concorrenza centralizzata. Poco dopo si presentò b-money, la prima proposta contenente la risoluzione di hash puzzles e consenso distribuito. Il primo prototipo di implemenazione arrivo da Hal Finney con le RPOW (reusable proof of work). Nel 2009 arrivò finalmente Bitcoin. Il meccanismo dietro la PoW risolse due problemi: l'implementazione di un algoritmo di consenso totalmente distribuito (1), e come consentire il libero ingresso nel processo di consenso, risolvendo il problema politico di decidere chi può influenzare il consenso (2), prevenendo contemporaneamente i [sybil attacks](https://academy.binance.com/it/articles/sybil-attacks-explained). 
+Nell'universo Ethereum esiste un singolo, computer canonimo chiamato Ethereum Virtual Machine (EVM), il cui stato è stabilito da un consenso omogeneo nella rete. Chiunque voglia partecipare alla rete Ethereum (Ethereum node) tiene una copia di tale stato nel proprio computer. Ogni partecipante può inviare in broadcast una richiesta per effettuare una computazione arbitraria. Alla sottomissione della richiesta, gli altri partecipanti verificano, validano ed eseguono la computazione. Questa esecuzione causa la transizione della EVM ad un nuovo stato, che viene propagato (commitment) alla rete in broadcast. Le richieste di computazione prendono il nome di **transaction request** ed insieme allo **stato della EVM** vengono conservate nella blockchain, il cui contenuto è confermato attraverso un protocollo di consenso. 
 
 
 
-### Bitcoin come uno State Transition System
+## 1. Cosa è un ether?
 
-Da un punto di vista tecnico, il ledger di una cryptocurrency come Bitcoin può essere considerato come un sistema di transizione a stati, dove uno stato consiste nel fotografare chi è il possessore di tutte le UTXO esistenti al momento, mentre una funzione di transizione prende in input uno stato $S$ ed una transazione $tx$ e torna in output un nuovo stato. Da quello che abbiamo visto sino ad ora, possiamo descrivere una ipotetica funzione `apply(S, tx) -> S'` come segue: 
+L'ether (ETH) è la cryptocurrency nativa di Ethereum. Lo scopo dell'ether è quello di consentire un mercato per la computazione. Un mercato di questo tipo fornisce un incentivo economico affinché i partecipanti verifichino ed eseguano le richieste di transazione e forniscano risorse di calcolo alla rete. Ogni partecipante che trasmette una richiesta deve anche offrire alla rete un certo importo in ether a titolo di ricompensa (transaction fees). Il costo della fee cresce con la complessità della computazione da eseguire e dalle risorse richieste. 
 
-1. Per ogni input nella `tx`: 
-   1. Se l'UTXO referenziata non è in `S`, ritorna errore.
-   2. Se la firma dell'owner della UTXO non è verificata, ritorna errore. 
-2. Se la somma delle UTXO di input è minore alla somma delle UTXO di output, ritorna errore.
-3. Ritorna `S` dove vengono rimosse tutte le UTXO di input e aggiunte tutte le UTXO di output. 
-
-
-
-## Ethereum accounts
-
-In Ethereum, lo stato è costituito da oggetti chiamati "account", ognuno di essi possiede un indirizzo di 20 byte. Per transizione di stato ci si riferisce al *trasferimento diretto di informazioni* tra account. Un account Ethereum contiene quattro campi: 
-
-* Il **nonce**, un contatore che permette di controllare che ogni tx sia processata 1 volta
-* L'**ether balance** dell'account (quantitativo di ether)
-* Il  **contract code**, se presente
-* L'**account storage**, vuoto di default
-
-L'**ether** è il principale crypto-fuel (benzina) di Ethereum, ed è utilizzato per pagare le transaction fees. In generale, esistono due tipi di account: 
-
-* **Externally Owned Account** (**EOA**): controllato da una chiave privata, non ha codice e può comunicare con altri account creando e firmando una transazione.
-* **Contract account**: controllato dal contract code. Ogni volta che riceve un messaggio, il suo codice si attiva permettendogli di leggere e scrivere sul proprio storage e di inviare messaggi ad altri account o creare altri contratti. 
-
-In Ethereum, per contratto si intende un "agente autonomo" che vive all'interno della piattaforma, che esegue un codice stabilito ogni qual volta riceve un messaggio, che può controllare il proprio ether balance e molto altro.  
+|  nome  |   1 ETH   |
+| :----: | :-------: |
+| ether  |     1     |
+| finney |  $10^3$   |
+| szabo  |  $10^6$   |
+|  wei   | $10^{18}$ |
 
 
 
-### Esempi di contratti
-
-Vediamo alcuni esempi di contratti: 
-
-* Creazione di nuovi token ([ERC-20](https://ethereum.org/it/developers/docs/standards/tokens/erc-20/))
-* Prodotti finanziari
-* DAR ([Distinguishable Assets Registry, Contract for NFTs](https://github.com/ethereum/EIPs/issues/821))
-* DAO ([Distributed autonomous organizations](https://ethereum.org/it/dao/))
-* giochi ([CryptoKitties](https://www.cryptokitties.co/), [Sorare](https://sorare.com/))
 
 
+## 2. Gli account
 
-### La valuta digitale di Ethereum
+In Ethereum, lo stato è costituito da **account**, ognuno di essi possiede un indirizzo di 20 byte. Per transizione di stato ci si riferisce al *trasferimento diretto di informazioni* tra account. Esistono due tipi di account: 
 
-* ether (ETH)
-* finney - $1$ ETH = $10^3$ finney
-* szabo - $1$ ETH = $10^6$ szabo
-* wei - $1$ ETH = $10^{18}$ wei  
+* **External Owned Account** (**EOA**): controllato da chiunque abbia la chiave privata
+* **Smart Contracts**: un agente intelligente controllato dal codice. 
+
+Entrambi i tipi di account hanno l'abilità di ricevere, conservare ed inviare ETH e token, e di interagire con gli altri smart contract. Vediamo le differenze sostanziali: 
+
+| EOA                                                          | Smart Contract                                               |
+| ------------------------------------------------------------ | ------------------------------------------------------------ |
+| Creare un account non costa nulla.                           | Creare un contratto ha un costo, poiché utilizza l'archiviazione di rete. |
+| Può avviare transazioni.                                     | Può inviare transazioni solo in risposta alla ricezione di una transazione. |
+| Le transazioni tra EOA possono riguardare unicamente trasferimenti di ETH / token. | Le transazioni da EOA a Smart Contract possono innescare un codice che può eseguire le azioni più svariate, come il trasferimento di token o persino la creazione di un nuovo contratto. |
+
+Gli account Ethereum hanno principalmente quattro campi: 
+
+| Nome          | Descrizione                                                  |
+| ------------- | ------------------------------------------------------------ |
+| *nonce*       | un contatore che indica il numero di tx inviate dall'account. Questo assicura che le tx siano elaborate una volta. In un account Contract, questo numero rappresenta il numero di contratti creati dallo Smart Contract. |
+| *balance*     | Il numero di wei posseduti da questo indirizzo. Ricordiamo che 1 ETH = 1e+18 wei. |
+| *codeHash*    | Questo hash si riferisce al frammento di codice (in bytecode) di uno Smart Contract sulla EVM. Ogni volta che il contratto riceve un messaggio, questo frammento viene eseguito. Il codice **non può essere modificato in futuro**. Negli EOA questo campo è vuoto. |
+| *storageRoot* | Hash a 256 bit della root di un Merkle Patricia Trie che codifica il contenuto dello spazio di archiviazione dell'account. Negli EOA questo campo è vuoto. |
+
+L'indirizzo dell'account varia in base al tipo. Se l'account è un EOA allora l'indirizzo è l'hash della chiave pubblica, mentre se l'account è uno Smart Contract allora l'indirizzo è l'hash della concatenazione tra indirizzo del creatore e la nonce del creatore. 
+
+![Un diagramma mostra la composizione di un conto](Ch_8_ethereum.assets/accounts.png)
 
 
 
-## Ethereum Virtual Machine (EVM)
+### 2.1 ⚒️ Approfondire gli Smart Contracts
 
-L'EVM esiste come entità singola gestita da migliaia di computer collegati, che eseguono un client Ethereum. Il protocollo Ethereum stesso esiste unicamente allo scopo di garantire un funzionamento continuo, ininterrotto e immutabile di questa speciale macchina a stati. Essa è l'ambiente in cui sono presenti tutti gli account Ethereum (EOA e Smart Contracts). In ognuno dei blocchi della blockchain, Ethereum ha uno ed un solo stato "canonico", e la EVM è ciò che definisce le regole per calcolare un nuovo stato valido da blocco a blocco. 
+> DA SVILUPPARE: [LINK ALLA DOCUMENTAZIONE](https://ethereum.org/it/developers/docs/smart-contracts/)
 
-Mentre Bitcoin è considerabile un libro mastro distribuito, dato che quello che principalmente si può fare sono delle transazioni, Ethereum è da considerarsi una macchina a stati distribuita, che permette anche di eseguire dei programmi chiamati Smart Contract. Lo stato di Ethereum è una enorme struttura dati che contiene non solo gli account e i rispettivi saldi, ma anche una macchina a stati che può cambiare da blocco a blocco in base ad un set prefissato di regole, e che può eseguire codice macchina arbitrario. Le regole specifiche di cambio stato da blocco a blocco sono definite dall'EVM. 
+
+
+### 2.2 External Owned Accounts
+
+Un EOA è costituito da una coppia di chiavi crittografiche di firma digitale: pubblica e privata. Una chiave privata si compone di 64 caratteri esadecimali (256 bit) ed è codificabile con una password. La chiave pubblica è generata dalla chiave privata usando ECDSA (Elliptic Curve Digital Signature Algorithm). Si può ottenere l'indirizzo pubblico dell'account attraverso gli ultimi 20 byte dell'hash Kekkak-256 della chiave pubblica e aggiungendo `0x` all'inizio.
+
+
+
+## 3. Le transazioni
+
+Le transazioni sono istruzioni firmate crittograficamente da account. Un account avvia una transazione per aggiornare lo stato della rete Ethereum. La transazione più semplice è il trasferimento di ETH da un  account ad un altro. Per transazione Ethereum si intende un'azione iniziata da un account EOA, in altre parole gestito dall'uomo e non da un contratto. La transazione modifica lo stato dell'EVM. Le transazioni devono essere trasmesse all'intera rete. Ogni nodo può trasmettere una richiesta di esecuzione di una transazione sull'EVM; in seguito, un miner eseguirà la transazione e propagherà il  cambiamento di stato che ne risulta al resto della rete. Le transazioni richiedono una commissione e deve essere eseguito il  mining affinché siano valide. Per semplificare questa spiegazione,  parleremo in altra sede di commissioni e di mining. Una tx inviata contiene le seguenti informazioni: 
+
+| Campo                  | Descrizione                                                  |
+| ---------------------- | ------------------------------------------------------------ |
+| *recipient*            | L'indirizzo ricevente (se si tratta di un account di proprietà esterna,  la transazione trasferirà valore. Se si tratta di un contratto, la  transazione eseguirà il codice del contratto) |
+| *signature*            | Identificatore del mittente. Viene generata quando la chiave privata del mittente firma la transazione e conferma che il mittente ha autorizzato la transazione. |
+| *value*                | Quantità di ETH da trasferire dal mittente al destinatario (in WEI, un taglio dell'ETH) |
+| *data*                 | Campo opzionale per includere dati arbitrari                 |
+| *gasLimit*             | Importo massimo di unità di gas che possono essere consumate  dalla transazione. Le unità di carburante rappresentano fasi di calcolo |
+| *maxPriorityFeePerGas* | la quantità massima di carburante da includere come mancia al miner |
+| maxFeePerGas           | la quantità massima di carburante che si è disposti a pagare per la transazione (comprensiva di *baseFeePerGas* e *maxPriorityFeePerGas*) |
+
+Vediamo un esempio di transazione: 
+
+```json
+{
+  from: "0xEA674fdDe714fd979de3EdF0F56AA9716B898ec8",
+  to: "0xac03bb73b6a9e108530aff4df5077c2b3d481e5a",
+  gasLimit: "21000",
+  maxFeePerGas: "300",
+  maxPriorityFeePerGas: "10",
+  nonce: "0",
+  value: "10000000000",
+}
+
+```
+
+Su Ethereum esistono due diversi tipi di transazione: 
+
+* Ordinary transaction: una transazione da un account ad un altro
+* Contract Distribution Transaction: una tx senza campo `to`, in cui il campo data contiene il codice del contratto da creare. 
+
+
+
+### 3.1 Costo in gas delle transazioni
+
+Come accennato, le transazioni hanno un costo in gas per essere eseguite. Semplici transazioni di trasferimento richiedono 21000 unità di carburante. Per poter inviare 1 ETH ad Alice con una baseFeePerGas di 190 gwei ed una maxPriorityFeePerGas di 10gwei, Bob dovrà pagare la seguente commissione: 
+
+```py
+(190 + 10) * 21000 = 4,200,000 gwei = 0.0042 ETH
+```
+
+In questo caso: 
+
+1. A Bob verranno addebitati -1,0042 ETH
+2. Ad Alice verrà accreditato +1.0 ETH
+3. La commissione base brucerà -0.00399 ETH
+4. Il miner riceverà una mancia di +0.000210 ETH
+
+Il carburante è richiesto anche per ogni interazione con Smart Contract. Il carburante non utilizzato viene **rimborsato** all'utente. 
+
+![Diagramma che mostra come viene rimborsato il carburante inutilizzato](Ch_8_ethereum.assets/gas-tx.png)
+
+### 3.2 Ciclo di vita delle transazioni
+
+Una volta inviata una transazione, succede quanto segue: 
+
+1. Viene generato un hash crittografico della transazione
+2. Viene inviata in broadcast e inclusa nel mempool dei miner 
+3. Il miner sceglie la tx da inserire nel blocco per verificarla e considerarla riuscita
+4. La tx riceverà un certo numero di conferme (blocchi creati dopo il blocco che la contiene)
+
+Più alto è il numero di conferme, maggiore è la certezza che la rete abbia elaborato e riconosciuto la transazione. 
+
+
+
+### 3.3 I messaggi
+
+Per messaggio si intende in generale una comunicazione tra account Ethereum. Una transazione è un messaggio, firmato da un EOA. Anche una chiamata `CALL` effettuata da un contratto ad un altro contratto è un messaggio, ma questo non ha bisogno di firme o convalidazioni, essendo un codice deterministico è possibile riprodurre i messaggi inviati data una transazione in input.  
+
+
+
+## 4. ⚒️ Gas e commissioni
+
+>  **ROBA GIÀ SCRITTA**
+>
+>  primi tre campi sono standard in ogni crypto. Il campo **data** può essere utilizzato per interagire con i contratti, nel caso di un contratto che implementa un DNS distribuito potremmo utilizzare il campo data per specificare la coppia \<dominio/ip\> e inviarla al contratto. I campi **STARTGAS** e **GASPRICE** sono essenziali per il sistema anti-DoS di Ethereum. Per contrastare dei loop infiniti intenzionali o accidentali, ad ogni transazione si associa un numero massimo di step computazionali da eseguire. L'unità di computazione è chiamata **gas**, spesso uno step computazionale costa 1 gas, ma esistono operazioni che ne richiedono di più poiché computazionalmente costose o poiché richiedono di conservare un certo quantitativo di dati nello stato. Esiste anche una fee di 5 gas per ogni byte nel campo transaction data. L'intento del sistema di fee è quello di far pagare all'attaccante un costo proporzionale ad ogni risorsa consumata, includendo il calcolo, la banda e lo storage. In sintesi: 
+>
+>  * Si pagano 5 gas per ogni byte nel campo dati
+>  * Si paga 1 gas circa per ogni step computazionale
+>  * Si paga >1 gas per step computazionalmente o spazialmente onerosi.
+
+
+
+
+
+## 5. La Ethereum Virtual Machine (EVM)
+
+L'EVM esiste come entità singola gestita da migliaia di computer collegati, che eseguono un client Ethereum. Il protocollo Ethereum stesso esiste unicamente allo scopo di garantire un funzionamento continuo, ininterrotto e immutabile di questa speciale macchina a stati. Essa è l'ambiente in cui sono presenti tutti gli account Ethereum (EOA e Smart Contracts). In ognuno dei blocchi della blockchain, Ethereum ha uno ed un solo stato "canonico", e la EVM è ciò che definisce le regole per calcolare un nuovo stato valido da blocco a blocco.  Mentre Bitcoin è considerabile un libro mastro distribuito, dato che quello che principalmente si può fare sono delle transazioni, Ethereum è da considerarsi una macchina a stati distribuita, che permette anche di eseguire dei programmi chiamati Smart Contract. Lo stato di Ethereum è una enorme struttura dati che contiene non solo gli account e i rispettivi saldi, ma anche una macchina a stati che può cambiare da blocco a blocco in base ad un set prefissato di regole, e che può eseguire codice macchina arbitrario. Le regole specifiche di cambio stato da blocco a blocco sono definite dall'EVM. 
 
 ![Ddiagramma che mostra la composizione dell'EVM](Ch_8_ethereum.assets/evm.png)
 
-> Da approfondire: 
->
-> * https://ethereum.org/it/developers/docs/evm/#top
 
 
-
-## Messaggi, transazioni e gas
-
-Il termine "transazione" è utilizzato in Ethereum riferendosi ad un *data package* contenente un messaggio, appositamente firmato ed inviato da un EOA. Una transazione contiene: 
-
-* Il destinatario (**recipient**) del messaggio
-* Una **firma** che identifica il mittente (sender)
-* La **quantità di ether** da trasferire dal mittente al destinatario
-* Un campo **dati** opzionale
-* Un campo **STARTGAS** che rappresenta il massimo numero di step computazionali che all'esecuzione della transazione è consentito effettuare. 
-* Un campo **GASPRICE**, che rappresenta la fee che il mittente paga in ether per ogni step computazionale.
-
-I primi tre campi sono standard in ogni crypto. Il campo **data** può essere utilizzato per interagire con i contratti, nel caso di un contratto che implementa un DNS distribuito potremmo utilizzare il campo data per specificare la coppia \<dominio/ip\> e inviarla al contratto. 
-
-I campi **STARTGAS** e **GASPRICE** sono essenziali per il sistema anti-DoS di Ethereum. Per contrastare dei loop infiniti intenzionali o accidentali, ad ogni transazione si associa un numero massimo di step computazionali da eseguire. L'unità di computazione è chiamata **gas**, spesso uno step computazionale costa 1 gas, ma esistono operazioni che ne richiedono di più poiché computazionalmente costose o poiché richiedono di conservare un certo quantitativo di dati nello stato. Esiste anche una fee di 5 gas per ogni byte nel campo transaction data. L'intento del sistema di fee è quello di far pagare all'attaccante un costo proporzionale ad ogni risorsa consumata, includendo il calcolo, la banda e lo storage. In sintesi: 
-
-* Si pagano 5 gas per ogni byte nel campo dati
-* Si paga 1 gas circa per ogni step computazionale
-* Si paga >1 gas per step computazionalmente o spazialmente onerosi.
-
-
-
-## Messaggi
-
-I contratti possono inviare messaggi ad altri contratti. I messaggi sono oggetti virtuali che esistono unicamente nell'Ethereum execution environment. Un messaggio contiene: 
-
-* Un sender (implicito)
-* Un recipient (destinatario) 
-* Un quantitativo di ether da trasferire insieme al messaggio
-* Un campo dati opzionale 
-* Un campo STARTGAS
-
-Un messaggio è come una transazione, eccetto che viene prodotto da un contratto anziché da un EOA. Un messaggio è prodotto quando durante l'esecuzione del codice di un contratto viene chiamato l'opcode `CALL`, che produce ed esegue un messaggio. Come una transazione, un messaggio raggiunge il contratto destinatario ed esegue il suo codice. Pertanto, i contratti possono avere relazioni con altri contratti esattamente nello stesso modo in cui possono farlo gli attori esterni.
-
-Si noti che la quota di gas assegnata da una transazione o da un contratto si applica al gas totale consumato da tale transazione e a tutte le sottoesecuzioni. Ad esempio, se un attore esterno A invia una transazione a B con 1000 gas e B consuma 600 gas prima di inviare un messaggio a C e l'esecuzione interna di C consuma 300 gas prima di tornare a B, B può spendere altri 100 gas prima di esaurirlo.
-
-
-
-## Ethereum State Transition Function
+### 5.1 La funzione di transizione di stato
 
 ![Ether state transition](Ch_8_ethereum.assets/ether-state-transition.png)
 
-
-
-La funzione di transizione di stato `APPLY(S, TX) -> S'` può essere definita come segue: 
+L'EVM si comporta come una funzione matematica: dato un input, produce un output deterministico. Quindi è più utile descrivere formalmente Ethereum come avente una funzione di transizione di stato: 
+$$
+Y(S, T) = S'
+$$
+Dato un vecchio stato valido $S$ ed un nuovo set di transizioni valide $T$, la funzione di transito di stato di Ethereum $Y(S, T)$ produce un nuovo stato di output valido $S'$. Nell'ambito di Ethereum, lo **stato** è un enorme struttura di dati chiamata **Modified Merkle Patricia Trie** (di cui parleremo in seguito) che tiene tutti gli account collegati tramite hash e riducibili ad un singolo hash della root, memorizzato sulla blockchain. La funzione di transizione di stato `Y(S, T) -> S'` può essere definita come segue: 
 
 * Controllare se la transazione è sintatticamente valida, che la sua firma sia valida e che la nonce combaci con la nonce conservata nell'account del mittente. Altrimenti ritorna errore. 
 * Calcolare la transaction fee come `STARTGAS * GASPRICE` e determina l'indirizzo del mittente dalla firma. Sottrarre la fee dal bilancio dell'account del sender e incrementare la nonce del sender. Se il sender non ha abbastanza ether, ritornare errore. 
@@ -132,7 +178,7 @@ La funzione di transizione di stato `APPLY(S, TX) -> S'` può essere definita co
 
 
 
-### Esempio 
+#### 5.1.1 Esempio di transazione di stato
 
 Supponiamo che il codice del contratto sia: 
 
@@ -165,19 +211,19 @@ Notare che i messaggi funzionano in maniera equivalente per il revert: se l'esec
 
 
 
-## Code execution e memoria
+### 5.2 Code execution e memorie
 
 Il codice di un contratto Ethereum è scritto in un linguaggio bytecode di basso livello e stack-based, chiamato "Ethereum virtual machine code" o "EVM code". Il codice consiste in una serie di byte, dove ogni byte rappresenta una operazione. In generale, l'esecuzione del codice consiste in un loop infinito che seleziona l'operazione indicata dal program counter e la esegue, incrementando poi il program counter di 1 (esso parte da 0), fino alla fine del codice o fino ad una istruzione STOP o RETURN. Le operazioni possono accedere a 3 tipi di spazio in cui conservare i dati: 
 
 *  Lo **stack**, un contenitore LIFO 
-* In **Memoria**, un byte array espandibile all'infinito
-* Il **long-term storage** del contratto, uno storage key-value.
+*  In **Memoria**, un byte array espandibile all'infinito
+*  Il **long-term storage** del contratto, uno storage key-value.
 
 Al contrario dello stack e della memoria, il long-term storage non si resetta alla fine dell'esecuzione del codice, ma mantiene i dati. Il codice può anche accedere ai campi legati al messaggio in arrivo (valore, sender, etc) o anche ai valori del block-header, e il codice può ritornare un byte array di dati come output.
 
 
 
-### Execution model
+### 5.3 Execution model
 
 Il modello di esecuzione del codice EVM è sorpendentemente semplice. Mentre la EVM esegue codice, il suo stato computazione è definibile dalla tupla: 
 
@@ -192,9 +238,15 @@ Dove `block_state` è lo stato globale contenente tutti gli account con i relati
 
 
 
-## Blockchain e Mining
+### 5.4 ⚒️ Modified Merkle Patricia Tree
 
-La blockchain di Ethereum è simile alla blockchain di Bitcoin, ma ha delle differenze. Quella principale è che i blocchi di Ethereum contengono una copia sia della lista di transazioni, che dello **stato globale** più recente. Inoltre, altri due valori sono conservati nel blocco: la **difficulty** ed il **block number**. Come già sappiamo, il mining è il processo di creazione di un blocco di transazioni, da aggiungere alla blockchain di Ethereum. Al momento, Ethereum utilizza un meccanismo di consenso basato su proof-of-work, ma verrà sostituito in futuro con il proof of stake. Il mining delle transazioni su Ethereum avviene nel seguente modo: 
+> DA SVILUPPARE: [LINK ALLA DOCUMENTAZIONE](https://eth.wiki/en/fundamentals/patricia-tree).
+
+
+
+## 6. Blockchain e mining
+
+La blockchain di Ethereum è simile alla blockchain di Bitcoin, ma ha delle differenze. Quella principale è che i blocchi di Ethereum contengono una copia sia della lista di transazioni, che dello **stato globale** più recente. Inoltre, altri due valori sono conservati nel blocco: la **difficulty** ed il **block number**. Come già sappiamo, il mining è il processo di creazione di un blocco di transazioni, da aggiungere alla blockchain di Ethereum. Al momento, Ethereum utilizza un meccanismo di consenso basato su **proof-of-work**, ma verrà sostituito in futuro con il proof of stake. Il mining delle transazioni su Ethereum avviene nel seguente modo: 
 
 1. Un account scrive e firma una richiesta di transazione con la propria chiave privata. 
 2. L'utente trasmette la richiesta all'intera rete Ethereum attraverso un nodo. 
@@ -234,13 +286,7 @@ Conservare l'intero stato può sembrare una inefficienza, ma bisogna evidenziare
 
 
 
-### Proof of work
-
-Il Proof of Work utilizzato da Ethereum è molto simile a quello di Bitcoin: il miner deve calcolare un mixHash che sia minore di una target nonce. 
-
-
-
-### Algoritmo di mining: Ethash
+### 6.1 Ethash, l'algoritmo di mining
 
 L'algoritmo di mining di Ethereum prende il nome di **Ethash**, ed è una versione specifica dell'algoritmo di [Dagger-Hashimoto](https://eth.wiki/concepts/dagger-hashimoto). Tale algoritmo ha due obiettivi principali: 
 
@@ -281,6 +327,14 @@ Vediamo adesso **come funziona l'algoritmo Ethash** di Ethereum 1.0: esiste un s
 
 
 ![image-20220522134918625](Ch_8_ethereum.assets/image-20220522134918625.png)
+
+
+
+
+
+
+
+
 
 
 
