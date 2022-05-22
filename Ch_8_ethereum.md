@@ -276,5 +276,13 @@ m = H_m \and n \le \frac{2^{256}}{H_d} \hspace{1cm} (m,n) = PoW(H_{\not n}, H_n,
 $$
 Dove $m$ è, per l'appunto, il mix-hash ed $n$ è un valore correlato alla funzione $H$ e a $d$. L'algoritmo che calcola tali valori è il sopracitato Ethash. 
 
+Vediamo adesso **come funziona l'algoritmo Ethash** di Ethereum 1.0: esiste un seed che può essere calcolato per ogni blocco andando a scansionare i block headers fino al blocco di interesse. Dal seed, è possibile calcolare una cache pseudorandom con $J_{\text{cacheinit}}$ byte iniziali. I light client conservano tale cache. Dalla cache, è possibile generare un dataset con $J_{\text{datasetinit}}$ byte iniziali, con la proprietà che ogni item nel dataset dipende da un piccolo numero di item nella cache. I full client ed i miner conservano il dataset. Il dataset cresce in maniera lineare con il tempo. Il mining consiste nel selezionare pezzi random del dataset ed effettuare l'hash della loro concatenazione, insieme agli header del blocco indicati sopra. La verifica può essere fatta con poca memoria, andando a generare i pezzi utilizzati attraverso la cache (per questo i light client conservano le cache). Il dataset è aggiornato ogni $J_{\text{epochs}}$ blocchi, così che la maggior parte della difficolta del mining stia nel leggere il dataset più che computarlo. I parametri sono presenti nello yellow-paper e sono i seguenti: 
+
+
+
+![image-20220522134918625](Ch_8_ethereum.assets/image-20220522134918625.png)
+
+
+
 
 
