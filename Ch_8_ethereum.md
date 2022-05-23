@@ -51,9 +51,61 @@ L'indirizzo dell'account varia in base al tipo. Se l'account è un EOA allora l'
 
 
 
-### 2.1 ⚒️ Approfondire gli Smart Contracts
+### 2.1 Approfondire gli Smart Contracts
 
-> DA SVILUPPARE: [LINK ALLA DOCUMENTAZIONE](https://ethereum.org/it/developers/docs/smart-contracts/)
+Uno Smart Contract è un programma eseguito sulla blockchain di Ethereum. È una raccolta di codice (le funzioni) e dati (lo stato) che risiede ad un indirizzo specifico della blockchain di Ethereum. Gli Smart Contract possono definire regole come un normale contratto, ed eseguirle automaticamente tramite codice. Non sono eliminabili di default e le interazioni con essi sono irreversibili.  
+
+#### 2.1.1 Esempio: Digital Vending Machine
+
+Un distributore è una metafora azzeccata per descrivere gli Smart Contract, poiché con i giusti input è garantito un determinato output. Per ricevere uno snack, la logica è la seguente: 
+
+```python
+denaro + scelta dello snack = snack erogato
+```
+
+Vediamo come questa funzionalità può essere trasferita in uno Smart Contract, utilizzando il linguaggio ad alto livello Solidity: 
+
+```solidity
+pragma solidity 0.8.7;
+
+contract VendingMachine {
+	
+	// indirizzo dell'owner della vending machine.
+	address public owner; 
+	// mappa (indirizzo, unità) che conta quanti cupcake ha
+	// ciascuno degli indirizzi che interagisce con la v.m.
+	mapping (address => unit) public cupcakeBalances;
+
+	// al deploy dello smart contract, impostiamo l'owner
+	// all'indirizzo di chi fa il deploy e inizializziamo 
+	// il numero di cupcake a 100. 
+	constructor() {
+		owner = msg.sender;
+		cupcakeBalances[address(this)] = 100;
+	}
+
+	// solo l'owner può rifornire (di 100 cupcake) il distributore
+	function refill(uint amount) public {
+		require(msg.sender == owner, "Solo il proprietario può rifornire.")
+		cupcakeBalances[address(this)] += amount; 
+	}
+
+	// chiunque con almeno 1 ETH può comprare 1 cupcake. 
+	// il bilancio dei cupcake dell'acquistatore aumenterà di "amount"
+	function purchase(uint amount) public payable {
+		require(msg.value >= amount * 1 ether, "Almeno 1 ETH per 1 cupcake");
+		require(cupcakeBalances[address(this)]) -= amount;
+		cupcakeBalances[msg.sender] += amount; 
+	}
+
+}
+```
+
+
+
+#### 2.1.2 Ancora sugli Smart Contracts
+
+Chiunque può scrivere uno smart contract e distribuirlo nella rete, è sufficiente saper programmare in un linguaggio per Smart Contract (es. Solidity, Vyper) e avere abbastanza ETH. Distribuire uno Smart Contract è tecnicamente una transazione, quindi occorre pagare del gas. I costi in gas per la distribuzione di uno Smart Contract sono però più elevati. Gli Smart Contract sono **pubblici** su Ethereum e possono essere considerati delle API aperte. Significa che è possibile chiamare altri Smart Contract nel proprio contratto in modo da ampliare enormemente quello che è possibile fare con essi. Un contratto può distribuire altri contratti. Gli Smart Contract non possono ottenere informazioni sugli eventi nel mondo reale perché non possono inviare richieste HTTP. Basarsi su informazioni esterne potrebbe pregiudicare il consenso, importante per la sicurezza e la decentralizzazione. Un modo per ovviare a questo problema è l'utilizzo degli [oracoli](https://ethereum.org/it/developers/docs/oracles/).
 
 
 
@@ -65,7 +117,7 @@ Un EOA è costituito da una coppia di chiavi crittografiche di firma digitale: p
 
 ## 3. Le transazioni
 
-Le transazioni sono istruzioni firmate crittograficamente da account. Un account avvia una transazione per aggiornare lo stato della rete Ethereum. La transazione più semplice è il trasferimento di ETH da un  account ad un altro. Per transazione Ethereum si intende un'azione iniziata da un account EOA, in altre parole gestito dall'uomo e non da un contratto. La transazione modifica lo stato dell'EVM. Le transazioni devono essere trasmesse all'intera rete. Ogni nodo può trasmettere una richiesta di esecuzione di una transazione sull'EVM; in seguito, un miner eseguirà la transazione e propagherà il  cambiamento di stato che ne risulta al resto della rete. Le transazioni richiedono una commissione e deve essere eseguito il  mining affinché siano valide. Per semplificare questa spiegazione,  parleremo in altra sede di commissioni e di mining. Una tx inviata contiene le seguenti informazioni: 
+La transazione è uno speciale messaggio creato e firmato da un EOA (una persona), verso un altro EOA, uno Smart Contract, o atto alla creazione di un nuovo Smart Contract. La transazione viene inviata in broadcast all'intera rete e modifica lo stato globale della EVM. I miner si occuperanno di elaborare e validare la richiesta di transazione e di calcolare il nuovo stato della EVM. Le transazioni richiedono una commissione, di cui parleremo dopo. Una transazione contiene le seguenti informazioni: 
 
 | Campo                  | Descrizione                                                  |
 | ---------------------- | ------------------------------------------------------------ |
@@ -94,8 +146,11 @@ Vediamo un esempio di transazione:
 
 Su Ethereum esistono due diversi tipi di transazione: 
 
-* Ordinary transaction: una transazione da un account ad un altro
-* Contract Distribution Transaction: una tx senza campo `to`, in cui il campo data contiene il codice del contratto da creare. 
+| Nome                    | Tipo                              | To             | Descrizione                                                  |
+| ----------------------- | --------------------------------- | -------------- | ------------------------------------------------------------ |
+| Trasferimento di valuta | Ordinary Transaction              | EOA            | Una transazione di ETH da un account ad un altro             |
+| Attivazione contratto   | Ordinary Transaction              | Smart Contract | Esecuzione del codice di un contratto, triggerandolo e passando eventualmente parametri dal campo data. |
+| Creazione contratto     | Contract Distribution Transaction | -              | creazione di un nuovo contratto, in tal caso i dati conterranno il codice del contratto. |
 
 
 
@@ -133,7 +188,17 @@ Più alto è il numero di conferme, maggiore è la certezza che la rete abbia el
 
 ### 3.3 I messaggi
 
-Per messaggio si intende in generale una comunicazione tra account Ethereum. Una transazione è un messaggio, firmato da un EOA. Anche una chiamata `CALL` effettuata da un contratto ad un altro contratto è un messaggio, ma questo non ha bisogno di firme o convalidazioni, essendo un codice deterministico è possibile riprodurre i messaggi inviati data una transazione in input.  
+Per messaggio si intende in generale una comunicazione tra account Ethereum. Una transazione è un messaggio, firmato da un EOA. Anche una chiamata `CALL` effettuata da un contratto ad un altro contratto ([composability](https://ethereum.org/en/developers/docs/smart-contracts/#composability)) è un messaggio, ma questo non ha bisogno di firme o convalidazioni, essendo un codice deterministico è possibile riprodurre i messaggi inviati data una transazione in input.  Vediamo come una transazione effettuata da un utente può scatenare una catena di messaggi: 
+
+```
+     T--------------------------------(msg)
+ 	 | 									|
+     v                   |(msg)----> CNTR_2 (msg)---> EOA_2 
+EOA_1 (tx)---> CNTR_1 -- |				
+                     	 |(msg)----> CNTR_3 
+```
+
+
 
 
 
@@ -238,9 +303,132 @@ Dove `block_state` è lo stato globale contenente tutti gli account con i relati
 
 
 
-### 5.4 ⚒️ Modified Merkle Patricia Tree
+### 5.4 ⚠️ The Merkle Patricia Tree
 
-> DA SVILUPPARE: [LINK ALLA DOCUMENTAZIONE](https://eth.wiki/en/fundamentals/patricia-tree).
+> ⚠️ Non ho avuto il tempo di trovare una fonte che spieghi bene le regole di aggiornamento dei nodi in un modified Merkle Patricia Tree.  
+
+Il Merkle Patricia Tree fornisce una struttura dati autenticata crittograficamente che può essere utilizzata per conservare coppie (key, value), che supporremo essere stringhe (per generalizzare, utilizzare serializzazione). Questa struttura è totalmente deterministica e può essere ricalcolata con esattezza. Provvede dei tempi di inserimento, visita e cancellazione logaritmici. Partiamo prima dal preambolo: i radix tree. 
+
+#### 5.4.1 Merkle Radix Trie
+
+Abbiamo bisogno di due strutture dati: 
+
+* Un oggetto Nodo, che corrisponderà al nodo del Radix Trie
+* Un database chiave valore dove le chiavi sono hash-pointers e i valori sono oggetti Node
+
+Supponiamo di disporre di un alfabeto, che per semplicità assumiamo essere quello esadecimale: 
+
+```
+1, 2, 3, 4, 5, 6, 7, 8, 9, A, B, C, D, E, F
+```
+
+Supponiamo che all'interno del nodo ci sia un array di hash-pointers (facciamolo partire da 1 per semplicità), quindi richiamando: 
+
+```python
+node.pointers[1]
+```
+
+Allo stesso tempo, ogni nodo contiene un valore codificato in RLP: 
+
+```python
+node.value # RLP encoded string
+```
+
+Ottengo l'hash-pointer del nodo che sta sotto il nodo corrente, all'indice 1. Per ottenere realmente il nodo, quello che si deve fare è utilizzare il database: 
+
+```python
+database.get( node.pointers[1] ) # ottengo un oggetto nodo
+```
+
+L'hash pointer è calcolato attraverso una funzione hash crittografica, come kekkak-256 o SHA3: 
+
+```python
+belownode = database.get( currentnode.pointers[1] ) 
+assert hash(belownode) == currentnode.pointers[1]
+```
+
+Quando un valore viene aggiornato, aggiunto o eliminato gli hash-pointers vengono ricalcolati di conseguenza fino alla radice. Di fatto questa è la parte "Merkle" di questa implementazione del Radix Trie. 
+
+**Esempio.** Abbiamo la chiave `dog` e vogliamo ottenere il corrispondente valore. Convertiamo in esadecimale la stringa e otteniamo `64 6F 67`. Questo implica che il percorso da compiere è `root > 6 > 4 > 6 > F > 6 > 7`. Esplicitando la ricerca senza alcun algoritmo ricorsivo, avremmo: 
+
+```python
+root = database.get(roothash)
+liv_1_node = database.get( root.pointers[6] )
+liv_2_node = database.get( liv_1_node.pointers[4] )
+liv_3_node = database.get( liv_2_node.pointers[6] )
+liv_4_node = database.get( liv_3_node.pointers[15] )
+liv_5_node = database.get( liv_4_node.pointers[6] )
+liv_6_node = database.get( liv_5_node.pointers[7] )
+value = rlp_decode( liv_6_node.value )
+print(value)
+```
+
+Il radix trie ha problemi di inefficienza: se vogliamo conservare solo una coppia (path, value) dove path è una stringa di 64 caratteri (codificabile in 32 byte, essendo un carattere codificabile in 4 bit), allora dobbiamo creare 64 livelli (space inefficient). Una delete dovrebbe ripercorrere tutti i 64 livelli (time inefficient). I Merkle Patricia Trie risolvono questo problema.
+
+
+
+#### 5.4.2 Merkle Patricia Trie
+
+Un nodo in un Merkle Patricia Trie può assumere uno tra questi quattro aspetti:
+
+* `EmptyNode` (rappresenta la stringa vuota)
+* `BranchNode` un nodo con 17 item `[v0, ..., v15, vt]`
+* `LeafNode` un nodo con 2 item `[encoded_path, value]`
+* `ExtensionNode` un nodo con 2 item `[encoded_path, key]`
+
+Chiamiamo "trie" la struttura per brevità. Strutturiamola come un'interfaccia: 
+
+```go
+type Trie struct {
+	root Node
+}
+```
+
+Quando il trie viene creato, la root è un Empty node. 
+
+
+
+![img](Ch_8_ethereum.assets/0BYqeU9FQ8XycgGzn.png)
+
+
+
+Inseriamo la prima coppia chiave valore `(80,f8ab...)` , dove sia la chiave che il valore sono codificati in RLP. Viene creato un LeafNode contenente il valore: 
+
+
+
+![img](Ch_8_ethereum.assets/0_Db4DXKBpizQy8MK.png)
+
+
+
+Quando viene inserita la seconda coppia `(01, f8ab...)`, il LeafNode nella root diventa un BranchNode con due rami che puntano a 2 LeafNode. Il LeafNode sulla destra contiene il primo valore, quello sulla sinistra il secondo. Notiamo che la chiave del primo è `80`, di fatto dal primo nibble `8` ci si riconduce al valore, mentre la chiave secondo è `01`, di fatti per raggiungerlo si parte da `0`.
+
+
+
+![image-20220523145405055](Ch_8_ethereum.assets/image-20220523145405055.png)
+
+
+
+Aggiungiamo una terza coppia `(02, f86d...)` e osserviamo che il nodo sulla sinistra diventa un BranchNode: 
+
+![image-20220523145606663](Ch_8_ethereum.assets/image-20220523145606663.png)
+
+
+
+In generale, quando andiamo ad aggiungere una coppia `(k, v)` percorriamo l'albero dalla root verso il basso, seguendo la path indicata dall'encoding il RLP della chiave (carattere per carattere). Le regole per l'aggiornamento dei nodi di un Merkle Patricia Trie sono le seguenti: 
+
+1. Quando ci si ferma su un EmptyNode, esso si rimpiazza con un LeafNode contenente la rimente path.
+2. Quando ci si ferma su un LeafNode, si converte in un ExtensionNode e si aggiunge un nuovo branch ed un nuovo LeafNode.
+3. Quando ci si ferma su un ExtensionNode, si converte in un altro ExtensionNode con un cammino più breve e si crea un nuovo BranchNode che punta all'ExtensionNode. 
+
+
+
+![enter image description here](Ch_8_ethereum.assets/YZGxe.png)
+
+
+
+#### 5.4.3 I Trie in Ethereum
+
+Tutti i trie in Ethereum sono Merkle Patricia Trie. Analizzando il block header troviamo gli hash di 3 Trie root: `stateRoot`, `transactionsRoot` e `receiptsRoot`. Esiste anche un Trie, chiamato `StateTrie` dove è conservato l'intero stato globale. All'interno di questo `StateTrie` vengono conservati gli account Ethereum e le loro informazioni, tra le cui esiste anche lo `storageRoot`, che non è altro che un ulteriore Trie dove vivono tutti gli oggetti nello storage dello Smart Contract. 
 
 
 
