@@ -204,6 +204,8 @@ EOA_1 (tx)---> CNTR_1 -- |
 
 ## 4. ⚒️ Gas e commissioni
 
+>[Link alla documentazione](https://ethereum.org/en/developers/docs/gas)
+
 >  **ROBA GIÀ SCRITTA**
 >
 >  primi tre campi sono standard in ogni crypto. Il campo **data** può essere utilizzato per interagire con i contratti, nel caso di un contratto che implementa un DNS distribuito potremmo utilizzare il campo data per specificare la coppia \<dominio/ip\> e inviarla al contratto. I campi **STARTGAS** e **GASPRICE** sono essenziali per il sistema anti-DoS di Ethereum. Per contrastare dei loop infiniti intenzionali o accidentali, ad ogni transazione si associa un numero massimo di step computazionali da eseguire. L'unità di computazione è chiamata **gas**, spesso uno step computazionale costa 1 gas, ma esistono operazioni che ne richiedono di più poiché computazionalmente costose o poiché richiedono di conservare un certo quantitativo di dati nello stato. Esiste anche una fee di 5 gas per ogni byte nel campo transaction data. L'intento del sistema di fee è quello di far pagare all'attaccante un costo proporzionale ad ogni risorsa consumata, includendo il calcolo, la banda e lo storage. In sintesi: 
@@ -211,8 +213,6 @@ EOA_1 (tx)---> CNTR_1 -- |
 >  * Si pagano 5 gas per ogni byte nel campo dati
 >  * Si paga 1 gas circa per ogni step computazionale
 >  * Si paga >1 gas per step computazionalmente o spazialmente onerosi.
-
-
 
 
 
@@ -433,6 +433,46 @@ Tutti i trie in Ethereum sono Merkle Patricia Trie. Analizzando il block header 
 
 
 ## 6. Blockchain e mining
+
+La blockchain di Ethereum è simile a quella di Bitcoin, vedremo le differenze a partire dai blocchi, per finire all'algoritmo di mining. 
+
+
+
+### 6.1 Blocchi
+
+Un blocco è un batch di transazioni con un hash del precedente blocco della catena. Sappiamo già come funziona una blockchain dai capitoli precedenti. Un blocco è aggiunto ogni **15 secondi** circa, e per aggiunto intendiamo che viene stabilito il consenso, o ancora che viene trovata una nonce valida. Per preservare uno storico delle transazioni, ogni blocco è **numerato** e ogni transazione all'interno del blocco è **numerata**. Vediamo adesso cosa contiene un blocco: 
+
+|           attributo | descrizione                                                  |
+| ------------------: | ------------------------------------------------------------ |
+|     ***timestamp*** | timestamp di quando il blocco è stato minato                 |
+|   ***blockNumber*** | la lunghezza della blockchain in blocchi                     |
+| ***baseFeePerGas*** | la minima fee (in ETH) per unità di gas richiesta alle transazioni per essere aggiunte nel blocco. |
+|    ***difficulty*** | l'effort richiesto per minare il blocco                      |
+|       ***mixHash*** | un identificativo univoco per il blocco                      |
+|    ***parentHash*** | il mixHash del blocco precedente (link)                      |
+|  ***transactions*** | le transazioni incluse nel blocco                            |
+|     ***stateRoot*** | la Trie Root dello State Trie                                |
+|         ***nonce*** | un hash che, se combinato con il mixHash, prova che il blocco ha superato la PoW. |
+
+
+
+L'immagine sottostante mostra i vari Merkle Patricia Tree puntati dalle root nella block header. 
+
+
+
+![image-20220523153331399](Ch_8_ethereum.assets/image-20220523153331399.png)
+
+
+
+#### 6.1.1 Block time e Block size
+
+Per **block time** si intende il tempo richiesto per minare un nuovo blocco. In Ethereum corrisponde in media tra i 12 e i 14 secondi. Il block time atteso è hard-coded nel codice di Ethereum ed è usato per ri-bilanciare la difficoltà del mining quando i miner raggiungono una potenza di calcolo più elevata, e viceversa. 
+
+I blocchi sono limitati in termini di **dimensioni**. Ogni blocco ha una dimensione prevista di 15 milioni di gas, ma la dimensione dei blocchi aumenta o diminuisce in base alla domanda della rete, fino ad un limite massimo di 30 milioni di gas. L'ammontare del gas utilizzato da tutte le transazioni deve essere inferiore al limite di gas del blocco. Questo evita che i blocchi siano arbitrariamente grandi, altrimenti i full node meno performanti non potrebbero stare dietro ai requisiti di spazio e velocità.
+
+
+
+### 6.2 Mining delle transazioni
 
 La blockchain di Ethereum è simile alla blockchain di Bitcoin, ma ha delle differenze. Quella principale è che i blocchi di Ethereum contengono una copia sia della lista di transazioni, che dello **stato globale** più recente. Inoltre, altri due valori sono conservati nel blocco: la **difficulty** ed il **block number**. Come già sappiamo, il mining è il processo di creazione di un blocco di transazioni, da aggiungere alla blockchain di Ethereum. Al momento, Ethereum utilizza un meccanismo di consenso basato su **proof-of-work**, ma verrà sostituito in futuro con il proof of stake. Il mining delle transazioni su Ethereum avviene nel seguente modo: 
 
