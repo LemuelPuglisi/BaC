@@ -204,15 +204,82 @@ EOA_1 (tx)---> CNTR_1 -- |
 
 ## 4. ⚒️ Gas e commissioni
 
->[Link alla documentazione](https://ethereum.org/en/developers/docs/gas)
+Con gas si intende l'unità di misura che indica la quantità di computazione necessaria ad eseguire delle specifiche operazioni sulla rete Ethereum. Dato che ogni transazione necessita di risorse di calcolo per essere eseguita, la commissione consiste nel gas richiesto per effettuarla. Se la quantità di computazione non fosse limitata dal suo costo, allora is sistema sarebbe passibile di DoS. 
 
->  **ROBA GIÀ SCRITTA**
+![Diagramma che mostra dove serve il carburante nelle operazioni dell'EVM](https://d33wubrfki0l68.cloudfront.net/393c8d51027a566662e0631740e33a07b49651cf/d47f5/static/9628ab90bfd02f64cf873446cbdc6c70/302a4/gas.png)
+
+Le commissioni sul gas sono pagate in ETH. I prezzi del carburante sono indicati in gwei, che corrispondono a $10^{-9}$ ETH. Il gas aumenta in base a: 
+
+* La complessità dell'operazione da svolgere
+* La quantità di storage occupato 
+* Il tipo di storage che si va ad occupare
+
+Nel caso in cui si libera spazio di storage (es. distruggendo un contratto) è possibile che le commissioni vengano **rimborsate**!
+
+
+
+### 4.1 Before London update
+
+Le modalità di calcolo delle commissioni di transazione sulla rete Ethereum sono state modificate con l'aggiornamento di Londra dell'agosto 2021. Ecco un riepilogo di come funzionavano in precedenza. 
+
+Chi crea la transazione specifica 2 parametri legati al gas: 
+
+- **GAS LIMIT**: un limite sul quantitativo massimo di gas che il committente è disposto a pagare. 
+- **GAS PRICE**: quanto il committente pagherà 1 unità di gas. Il valore è espresso in gwei. 
+
+Il committente deve controllare l'andamento del GAS PRICE nella rete ed impostarlo di conseguenza, altrimenti la propria transazione potrebbe richiedere più tempo per essere presa in carico (se GAS PRICE è troppo basso), o viceversa potrebbe pagare più soldi di quanti ne siano necessari. Il GAS LIMIT va impostato considerando una stima di quanto sprecherà l'operazione da svolgere. Se la transazione va in **out of gas**, il committente perde comunque i soldi della commissione. 
+
+Il pagamento della commissione è anticipato e `GAS-LIMIT x GAS-PRICE` gwei vengono sottratti al bilancio del mittente. Dopodiché viene eseguito il contratto, e se va a buon fine (ovvero il gas è sufficiente) il gas residuo viene rimborsato. 
+
+
+
+### 4.2 Out of gas
+
+Se la transazione va in out-of-gas, ovvero la quantità di gas necessaria affinché si completi la transazione correttamente è strettamente maggiore del GAS LIMIT impostato dall'utente, allora la transazione fallisce. In questo caso, vengono annullati tutti gli effetti che essa avrebbe avuto nel world state trie. Tuttavia, la transazione viene comunque registrata nella blockchain (come fallita) e la commissione viene addebitata al committente. 
+
+Chi programma uno smart contract può gestire un possibile out-of-gas tramite codice (errore gestibile), e agire di conseguenza. Gli errori fatali invece non possono essere gestiti e faranno fallire la transazione (non solo out-of-gas, ma anche bug vari). 
+
+In una **subcall** di un contratto ad un altro contratto, il secondo può spendere il gas messo a disposizione al primo. Se il gas finisce in una subcall, allora gli effetti del contratto chiamato vengono annullati. Il contratto chiamante può però gestire l'errore.
+
+
+
+### 4.3 After London update (EIP 1559)
+
+I problemi da risolvere erano principalmente l'eccessivo prezzo del gas e la sua volatilità, che provocava certezza sui tempi di approvazione. Per risolvere il problema, si proposero una serie di nuove meccaniche. Tra i benefici d'alto livello prodotto da questo aggiornamento si hanno: 
+
+* Una migliore stima della commissione sulle transazioni
+* Un'inclusione generalmente più rapida della transazione
+* La compensazione dell'emissione di ETH bruciando una percentuale di commissioni
+
+A partire dall'aggiornamento di Londra della rete, ogni blocco ha una **base fee**, il prezzo minimo per unità di carburante per  l'inclusione nel blocco, calcolato dalla rete in base alla domanda di  spazio per i blocchi. Poiché la commissione base della commissione sulle transazioni viene bruciata, gli utenti dovrebbero anche impostare una  **tip** (**max priority fee**) nelle proprie transazioni. La mancia  compensa i miner per aver eseguito e propagato le transazioni  dell'utente nei blocchi e dovrebbe essere impostata automaticamente da  gran parte dei wallet.
+
+Il calcolo della commissione sulle transazioni totale funziona così:
+$$
+\text{Units of gas (limit) } \times 
+(\text{base fee + tip})
+$$
+
+> Ipotizziamo che Jordan debba pagare 1 ETH a Taylor. Nella transazione, il limite di carburante è di 21.000 unità e la commissione base è di 100 gwei.  Jordan include una mancia di 10 gwei.
 >
->  primi tre campi sono standard in ogni crypto. Il campo **data** può essere utilizzato per interagire con i contratti, nel caso di un contratto che implementa un DNS distribuito potremmo utilizzare il campo data per specificare la coppia \<dominio/ip\> e inviarla al contratto. I campi **STARTGAS** e **GASPRICE** sono essenziali per il sistema anti-DoS di Ethereum. Per contrastare dei loop infiniti intenzionali o accidentali, ad ogni transazione si associa un numero massimo di step computazionali da eseguire. L'unità di computazione è chiamata **gas**, spesso uno step computazionale costa 1 gas, ma esistono operazioni che ne richiedono di più poiché computazionalmente costose o poiché richiedono di conservare un certo quantitativo di dati nello stato. Esiste anche una fee di 5 gas per ogni byte nel campo transaction data. L'intento del sistema di fee è quello di far pagare all'attaccante un costo proporzionale ad ogni risorsa consumata, includendo il calcolo, la banda e lo storage. In sintesi: 
+> Usando la formula di sopra possiamo effettuare il calcolo come segue: ` 21.000 * (100 + 10) = 2.310.000 gwei` o 0,00231 ETH.
 >
->  * Si pagano 5 gas per ogni byte nel campo dati
->  * Si paga 1 gas circa per ogni step computazionale
->  * Si paga >1 gas per step computazionalmente o spazialmente onerosi.
+> Quando Jordan invia il denaro, sul suo account sono sottratti 1,00231 ETH.  Taylor riceve un accredito di 1,0000 ETH. Il miner riceve la mancia di  0,00021 ETH. La commissione base di 0,0021 ETH è bruciata.
+
+Inoltre, Jordan può anche impostare una commissione massima (`maxFeePerGas`) per la transazione. A Jordan viene rimborsata la differenza tra commissione massima ed effettiva:
+$$
+\text{refund} = \text{maxFeePerGas - (base fee + tip)}
+$$
+Jordan può impostare un importo massimo da pagare per la transazione da eseguire, senza preoccuparsi di pagare troppo "oltre" la commissione  base quando la transazione è eseguita.
+
+
+
+### Gas e dimensione del blocco
+
+Prima  dell'Aggiornamento di Londra, Ethereum aveva blocchi di dimensioni  fisse. Nei momenti di domanda elevata della rete, questi blocchi  operavano a piena capacità. Quindi, spesso gli utenti dovevano attendere che calasse la domanda elevata prima di poter essere inclusi in un  blocco, e questo si traduceva in un'esperienza non soddisfacente per  l'utente.
+
+L'Aggiornamento di Londra ha introdotto in Ethereum blocchi di dimensioni variabili.  Ogni blocco ha una dimensione prevista di 15 milioni di gas, ma la  dimensione dei blocchi aumenta o diminuisce in base alla domanda della  rete, fino al limite massimo di 30 milioni di gas del blocco (2 volte la dimensione target del blocco). Il protocollo raggiunge una dimensione  del blocco equilibrata di 15 milioni in media tramite il processo di *tâtonnement*. Significa che se la dimensione del blocco è maggiore di quella  prevista, il protocollo aumenta la commissione base per il blocco  successivo. Analogamente, il protocollo riduce la commissione base se la dimensione del blocco è inferiore a quella prevista. L'importo della  commissione base si adatta proporzionalmente alla distanza della  dimensione del blocco corrente rispetto al target.
+
+
 
 
 
