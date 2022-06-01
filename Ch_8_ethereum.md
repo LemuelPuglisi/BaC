@@ -648,9 +648,19 @@ Un nodo nella rete Ethereum indica una macchina che esegue un software client, o
 
 
 
+### 6.3 Proof of Stake
 
+Al processo di consenso partecipano un **promotore** ed un comitato di **validatori** scelti randomicamente. Il promotore è scelto tra i validatori. Per diventare validatori bisogna investire una somma minima di 32 ETH sotto forma di Smart Contract. Il validatore guadagna attraverso la sua attività, ma viene penalizzato attraverso il patrimonio investito se agisce in maniera malevola, fino alla cancellazione totale del patrimonio. 
 
+Quando l'utente sceglie di diventare validatore e deposita almeno 32 ETH, viene aggiunto ad una coda che limita il numero di validators totale. Una volta attivato, il validatore riceve nuovi blocchi dai peers della rete Ethereum, valida le tx all'interno del blocco ricevuto ed invia alla rete un voto (**attestation**) in favore di quel blocco. Il tempo per effettuare questa azione è fissato a 12 secondi (slot). Il tempo nella PoS è diviso in slot da 12 secondi ed epoche da 32 slot. 
 
+Un validator è scelto randomicamente ad ogni slot per creare un nuovo blocco. Questo, una volta fatto, invierà il blocco alla network. Oltre ad esso, viene scelta una commissione di validator randomici, il cui voto determina se il blocco proposto andrà o meno nella blockchain. 
+
+Nelle reti distribuite, una transazione ha la sua "**finalità**" quando fa parte di un blocco che non può più cambiare. Per fare questo nella Proof of Stake, **Casper**, un protocollo di finalità, fa in modo che i validatori concordino sullo stato di un blocco in  determinati checkpoint. Quando 2/3 dei validatori sono concordi, il  blocco è finalizzato. I validatori perderebbero tutto il proprio stake  nel caso provassero successivamente ad apportare un cambiamento con un  attacco del 51%.
+
+Il primo blocco di ogni epoca è un checkpoint.  I validatos votano per paia di checkpoint che considerano validi. Se una coppia di checkpoint attrae voti di validators, la cui somma di fondi consiste in più di 2/3 dello stake totale, i checkpoint subiscono un upgrade: il più vecchio passa da **justified** a **finalized**, mentre il più giovane passa da **target** a **justified**. Per sovvertire un blocco finalized, un attaccante dovrebbe rischiare di perdere almeno 1/3 dello stake totale depositato su Ethereum.
+
+Altre novità sono la **Beacon chain**, che serve a campionare i valori pseudorandom necessari a trovare i promotori e il comitato dei validatori, e la **Shard chain**, che serve a distribuire il carico di lavoro. 
 
 
 
