@@ -202,7 +202,7 @@ EOA_1 (tx)---> CNTR_1 -- |
 
 
 
-## 4. ⚒️ Gas e commissioni
+## 4. Gas e commissioni
 
 Con gas si intende l'unità di misura che indica la quantità di computazione necessaria ad eseguire delle specifiche operazioni sulla rete Ethereum. Dato che ogni transazione necessita di risorse di calcolo per essere eseguita, la commissione consiste nel gas richiesto per effettuarla. Se la quantità di computazione non fosse limitata dal suo costo, allora is sistema sarebbe passibile di DoS. 
 
@@ -539,6 +539,32 @@ I blocchi sono limitati in termini di **dimensioni**. Ogni blocco ha una dimensi
 
 
 
+#### 6.1.2 Stale blocks
+
+Uno stale block è un blocco valido, che però estende il ramo sbagliato della catena (nel caso di Bitcoin, quello meno lungo), quindi il miner del blocco non riceverà ricompensa. Data la frequenza della creazione di blocchi in Ethereum, ci si aspetta un numero maggiore di blocchi stale. Ethereum implementa un protocollo di reward anche per i blocchi stale, attraverso il protocollo GHOST (Greedy Heaviest Observed SubTree).
+
+
+
+#### 6.1.3 GHOST protocol
+
+Il protocollo "Greedy Heaviest Observed Subtree" (GHOST) è  un'innovazione introdotta per la prima volta da Yonatan Sompolinsky e  Aviv Zohar nel [dicembre 2013](https://eprint.iacr.org/2013/881.pdf). La motivazione che sta alla base di GHOST è che le blockchain con tempi di conferma rapidi attualmente hanno una sicurezza ridotta a causa di un elevato tasso di stale blocks, perché i blocchi impiegano un certo periodo di tempo per propagarsi attraverso la rete. Se il miner A esegue il mining di un blocco e poi il miner B esegue il mining di un altro blocco prima che il blocco del miner A si propaghi a B, il blocco del  miner B andrà sprecato e non contribuirà alla sicurezza della rete.  Inoltre, è presente un problema di centralizzazione: se il miner A è un pool di mining con il 30% di hashpower e B ha il 10% di hashpower, A  corre il rischio di produrre un blocco obsoleto per il 70% del tempo  (dato che per il rimanente 30% del tempo produce l'ultimo blocco e  quindi ottiene subito i dati di mining) mentre B corre il rischio di  produrre un blocco obsoleto per il 90% del tempo. Quindi, se  l'intervallo del blocco è abbastanza breve affinché il tasso di  obsolescenza sia elevato, A sarà notevolmente più efficiente  semplicemente in virtù delle sue dimensioni. Con la combinazione di  questi due effetti, nelle blockchain che producono blocchi rapidamente è probabile che un pool di mining con una percentuale abbastanza elevata  di hashpower in rete abbia di fatto il controllo sul processo di mining.
+
+Come descritto da Sompolinsky e Zohar, GHOST risolve il primo problema  di perdita di sicurezza della rete includendo blocchi obsoleti nel  calcolo della catena "più lunga"; cioè, al calcolo del blocco con la  proof-of-work più elevata vengono aggiunti non solo il padre e gli  elementi ancora superiori di un blocco, ma anche i discendenti obsoleti  dell'antenato del blocco (nel gergo di Ethereum gli "uncle blocks"). Per risolvere il secondo problema della propensione alla centralizzazione,  andiamo oltre il protocollo descritto da Sompolinsky e Zohar e forniamo  ricompense anche per i blocchi obsoleti: un blocco obsoleto riceve  l'87,5% della ricompensa di base dovuta e il nipote che include il  blocco obsoleto il restante 12,5%. Le commissioni sulle transazioni però non vengono assegnate agli uncle blocks.  
+
+Ethereum implementa una versione semplificata di GHOST, che scende fino alla 7° generazione. E' definita come segue: 
+
+* Un blocco deve specificare un parent e 0 o più blocchi uncle. 
+* Un uncle incluso nel blocco B deve avere le seguenti proprietà: 
+  * Deve essere un figlio diretto della $k$-esima generazione di antenati di B, dove $2 \le k \le 7$. 
+  * Non può essere un antenato diretto di B. 
+  * Deve avere un block header valido. 
+  * Deve essere diverso da tutti gli uncle includi nei precedenti blocchi (e nel blocco corrente). 
+* Per ogni blocco uncle U in B, il miner B riceve un 3.125% aggiunto alla propria coinbase reward, ed il miner di U prende il restante 93.75%.
+
+La  limitazione alla 7° generazione è stata scelta per evitare complicazioni nella validazione e per rimuovere l'incentivo dei miner a minare nella chain di un public attacker. 
+
+
+
 ### 6.2 Mining delle transazioni
 
 La blockchain di Ethereum è simile alla blockchain di Bitcoin, ma ha delle differenze. Quella principale è che i blocchi di Ethereum contengono una copia sia della lista di transazioni, che dello **stato globale** più recente. Inoltre, altri due valori sono conservati nel blocco: la **difficulty** ed il **block number**. Come già sappiamo, il mining è il processo di creazione di un blocco di transazioni, da aggiungere alla blockchain di Ethereum. Al momento, Ethereum utilizza un meccanismo di consenso basato su **proof-of-work**, ma verrà sostituito in futuro con il proof of stake. Il mining delle transazioni su Ethereum avviene nel seguente modo: 
@@ -599,33 +625,26 @@ L'algoritmo di Dagger-Hashimoto è costruito on-top di due famosi lavori:
 
 Ethereum utilizza kekkak256 come algoritmo di hashing, talvolta chiamato (erroneamente) SHA3. Per maggiori informazioni consultare il [repository ufficiale](https://github.com/ethereum/eth-hash).
 
-Esistono due metodi per rendere una funzione hash ASIC-resistant: 
+Ethash è una versione modificata dell'algoritmo Dagger-Hashimoto. La proof-of-work di Ethash è memory hard (per ASIC resistance). La memory hardness è ottenuta attraverso un PoW che richiede la scelta di un sottoinsieme di risorse dipendente dalla nonce e dal block header. Queste risorse (in totale un paio di GB) vengono chiamate DAG. Il DAG cambia ogni 30000 blocchi, quindi rimane fissato in una finestra di circa 125 ore (~5.2 giorni) e impiega un po' per essere rigenerato. Il DAG dipende solo dall'altezza del blocco, quindi può essere pre-generato. Il DAG non serve per la validazione del blocco. In generale l'algoritmo è strutturato come segue: 
 
-* Utilizzare molta memoria e banda, così che le nonce non possano essere calcolate in parallelo. 
-* Rendere la funzione da calcolare "general-purpose" così da evitare lo "specialised hardware". 
+1. Esiste un seed che può essere calcolato per ogni blocco andando a scansionare tutte le block header fino al blocco stesso. 
+2. Da questo seed, si calcola una cache pseudorandom da 16MB. I light client conservano questa cache. 
+3. Dalla cache è possibile generare un dataset (DAG) da 1GB, con la proprietà che ogni item nel dataset dipende da pochi elementi nella cache. I full-client e i miner conservano il dataset, che cresce in dimensione linearmente con il tempo.
+4. Il mining consiste nel prende slice random del dataset ed effettuare l'hashing di queste insieme. La verifica può essere svolta in poco tempo, dato che le slice possono essere generate utilizzando la cache. 
 
-Nello specifico: 
+Il dataset viene aggiornato ogni 30.000 blocchi, e la maggior parte dell'effort dei miners sta nel leggere il dataset più che cambiarlo. 
 
-* Sia $H_{\not n}$ il block header del nuovo blocco ma senza la nonce ed il mix-hash
-* Sia $H_n$ la nonce del block header
-* Sia $d$ un dataset molto grande necessario a calcolare il mix-hash
-* Sia $H_d$ la difficoltà del nuovo blocco
-
-Allora bisogna calcolare il mix-hash $H_m$ tale che: 
-$$
-m = H_m \and n \le \frac{2^{256}}{H_d} \hspace{1cm} (m,n) = PoW(H_{\not n}, H_n, d)
-$$
-Dove $m$ è, per l'appunto, il mix-hash ed $n$ è un valore correlato alla funzione $H$ e a $d$. L'algoritmo che calcola tali valori è il sopracitato Ethash. 
-
-Vediamo adesso **come funziona l'algoritmo Ethash** di Ethereum 1.0: esiste un seed che può essere calcolato per ogni blocco andando a scansionare i block headers fino al blocco di interesse. Dal seed, è possibile calcolare una cache pseudorandom con $J_{\text{cacheinit}}$ byte iniziali. I light client conservano tale cache. Dalla cache, è possibile generare un dataset con $J_{\text{datasetinit}}$ byte iniziali, con la proprietà che ogni item nel dataset dipende da un piccolo numero di item nella cache. I full client ed i miner conservano il dataset. Il dataset cresce in maniera lineare con il tempo. Il mining consiste nel selezionare pezzi random del dataset ed effettuare l'hash della loro concatenazione, insieme agli header del blocco indicati sopra. La verifica può essere fatta con poca memoria, andando a generare i pezzi utilizzati attraverso la cache (per questo i light client conservano le cache). Il dataset è aggiornato ogni $J_{\text{epochs}}$ blocchi, così che la maggior parte della difficolta del mining stia nel leggere il dataset più che computarlo. I parametri sono presenti nello yellow-paper e sono i seguenti: 
+Per maggiori informazioni, rimando alla [documentazione ufficiale di Ethereum](https://ethereum.org/en/developers/docs/consensus-mechanisms/pow/mining-algorithms/ethash).
 
 
 
-![image-20220522134918625](Ch_8_ethereum.assets/image-20220522134918625.png)
+### 6.2 Tipi di nodi
 
+Un nodo nella rete Ethereum indica una macchina che esegue un software client, ovvero una implementazione di Ethereum che verifica transazioni in un blocco. Esistono tre tipi di nodi: full node, light node e archive node. 
 
-
-
+* I **full node** conservano tutta la blockchain, partecipano alla validazione del blocco, verificano le transazioni e gli stati. Tutti gli stati della EVM possono essere richiesti ad un full-node (anche se per stati molto vecchi, questo farà richiesta ad un archive node). 
+* I **light node** scaricano solo i block-headers. Se necessitano dell'informazione all'interno di un blocco, chiedono ad un full node. Possono validare i dati che arrivano attraverso le root nei block headers. Non partecipano al consenso.
+* Gli **archive node** conservano tutto e costruiscono un archivio degli stati della EVM. Questo implica che un archive node può fornire un bilancio di un account in un blocco X facilmente. 
 
 
 
