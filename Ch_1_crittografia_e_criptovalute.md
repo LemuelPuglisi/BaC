@@ -52,7 +52,7 @@ Se il dominio in cui mi muovo non è abbastanza grande, posso comunque ottenere 
 
 Un commitment (impegno) è l'analogo digitale di scrivere qualcosa (che ci si impegna a rispettare) su un pezzo di carta, sigillare tale pezzo di carta su una busta e porre la busta sul tavolo. Le altre persone non potranno vedere il contenuto della busta, sino ad un certo punto, quando si decide di aprirla per svelarne il contenuto. 
 
-> Se ad esempio ad una vendita vince la miglior offerta iniziale, tutti i partecipanti potrebbero fare un commitment, inserendo l'offerta all'interno di una busta sigillata e mettendola sul banco. Il venditore aprirà alla le buste solo quando tutti i partecipanti avranno consegnato l'offerta. I partecipanti non possono vedere le offerte posizionate sul banco, poiché sigillate, e quindi non possono offrire poco di più dell'offerta migliore per assicurarsi la vincita.   
+> Se ad esempio ad una vendita vince la miglior offerta iniziale, tutti i partecipanti potrebbero fare un commitment, inserendo l'offerta all'interno di una busta sigillata e mettendola sul banco. Il venditore aprirà le buste solo quando tutti i partecipanti avranno consegnato l'offerta. I partecipanti non possono vedere le offerte posizionate sul banco, poiché sigillate, e quindi non possono offrire poco di più dell'offerta migliore per assicurarsi la vincita.   
 
 Un commitment si compone di due algoritmi: 
 
@@ -135,7 +135,7 @@ def validateBlockchain(blockchain: Blockchain):
 
 Una possibile applicazione della block chain è un **tamper-evident log** (registro a prova di manomissione). Proviamo a manomettere il registro: l'obiettivo dell'avversario sarà quello di manomettere il contenuto di un blocco senza che chi contiene l'head della block-chain si accorga della manomissione. Supponiamo di manomettere il blocco $k$: questo implica che l'hash del blocco $k$ conservato nel blocco $k+1$ non corrisponderà all'hash del blocco $k$ modificato (questo è garantito statisticamente dalla collision resistance della funzione hash). Per risolvere questo problema, l'attaccante potrebbe provare a modificare l'hash del blocco $k+1$, ma a questo punto la manomissione sarà rilevata nel blocco $k+2$. Continuando in questo modo, alla fine la manomissione verrà rilevata nella head della block chain, che non essendo accessibile all'attaccante non potrà essere modificata.  ![image-20220314122530278](Ch_1_crittografia_e_criptovalute.assets/image-20220314122530278.png)
 
-Il risultato è che per mantenere la block chain consistente pur manomettendo il contenuto di blocchi, bisogna modificare gli hash di tutti i blocchi della catena fino all'head, che potrebbe benissimo essere memorizzata da qualche parte. Quindi potremmo costruire una grossa block chain,  e mantenerla consistende memorizzando solo la head, che chiameremo **genesis block**.
+Il risultato è che per mantenere la block chain consistente pur manomettendo il contenuto di blocchi, bisogna modificare gli hash di tutti i blocchi della catena fino all'head, che potrebbe benissimo essere memorizzata da qualche parte. Quindi potremmo costruire una grossa block chain, e mantenerla consistente memorizzando solo la head. 
 
  
 
@@ -238,11 +238,11 @@ Anche in Scroogecoin esiste l'operazione *CreateCoin*, ma è estesa per permette
 Per definizione, una transazione CreateCoin è valida se è firmata da Scrooge. Il secondo tipo di transazione è la PayCoin. Questa transazione consuma delle monete (le distrugge) e crea nuove monete con lo stesso valore ma con dei CoinID differenti. La transazione deve essere firmata da chiunque stia pagando con una moneta. Una transazione PayCoin è valida se soddisfa le seguenti 4 condizioni: 
 
 1. Le monete consumate devono essere valide e create in transazioni precedenti. 
-2. Le moente consumate non devono essere state consumate in precedenza. 
+2. Le monete consumate non devono essere state consumate in precedenza. 
 3. Il valore totale delle monete generate è uguale al valore totale di quelle consumate. 
 4. La transazione è valida solo se è firmata da tutti i proprietari delle monete consumate. 
 
-Se la transazione è valida, Scrooge la accetterà e la inserira nella blockchain. Gli utenti considereranno la transazione come "avvenuta" se e solo se essa sarà inserita nella blockchain firmata da Scrooge. Le monete in questo sistema sono **immutabili**, ovvero non sono mai divise o combinate. Possiamo comunque aggirare il sistema facendo un pagamento dall'utente a se stesso, dove dividiamo o combiniamo delle monete e le assegniamo all'utente stesso (il valore in uscita è comunque uguale al valore in entrata). 
+Se la transazione è valida, Scrooge la accetterà e la inserirà nella blockchain. Gli utenti considereranno la transazione come "avvenuta" se e solo se essa sarà inserita nella blockchain firmata da Scrooge. Le monete in questo sistema sono **immutabili**, ovvero non sono mai divise o combinate. Possiamo comunque aggirare il sistema facendo un pagamento dall'utente a se stesso, dove dividiamo o combiniamo delle monete e le assegniamo all'utente stesso (il valore in uscita è comunque uguale al valore in entrata). 
 
 Il **problema** della criptovaluta è proprio Scrooge: anche se non può creare transazioni false, può rifiutarsi di firmare valide transazioni di utenti. Inoltre Scrooge può creare infinite monete per se stesso. Il problema è proprio la **centralizzazione**, nel senso che gli utenti dovrebbero fidarsi ciecamente di Scrooge per utilizzare il sistema. Il nostro prossimo obiettivo sarà quello di costruire una criptocurrency dove Scrooge è decentralizzato. 
 

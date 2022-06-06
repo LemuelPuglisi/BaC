@@ -39,7 +39,7 @@ def scrypt(N, seed):
     V = np.zeros(N)
     # first step
     V[0] = seed
-    for i in range(N):
+    for i in range(1,N):
         V[i] = sha256(V[i-1])
     # second step
     X = sha256(V[N-1])

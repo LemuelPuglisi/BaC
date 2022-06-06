@@ -74,7 +74,7 @@ Decentralizzare protocolli del genere è difficile, tanto da pensare che l'idea 
 
 
 > **Blind signature**
-> Supponiamo che Alice voglia far firmare a Bob un messaggio $m$, senza far conoscere $m$. Alice applica a $m$ una funzione $f$ con particolari proprietà. Sia $c=f(m)$, Alice invia $c$ a Bob. Quest'ultimo calcola la firma $c'=g(c)$, ovvero $c'= g(f(m))$ ed invia la firma $c'$ ad Alice. La proprietà particolare di $f$ è che $g(f(m))=g(m)$ e quindi $c' = g(m)$ è la firma di $m$.
+> Supponiamo che Alice voglia far firmare a Bob un messaggio $m$, senza far conoscere $m$. Alice applica a $m$ una funzione $f$ con particolari proprietà. Sia $c=f(m)$, Alice invia $c$ a Bob. Quest'ultimo calcola la firma $c'=g(c)$, ovvero $c'= g(f(m))$ ed invia la firma $c'$ ad Alice. La proprietà particolare di $f$ è che $g(f(m)) \cdot f^{-1} =g(m)$ e quindi $c'' = g(f(m)) \cdot f^{-1}= g(m) $ è la firma di $m$.
 
 
 
