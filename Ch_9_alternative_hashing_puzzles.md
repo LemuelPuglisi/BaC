@@ -86,6 +86,13 @@ Esiste un ciclo di spesa effettuato dai miner, che consiste nel pagare elettrici
 
 Ma cosa da valore ad una crypto che si basa sulla proof of stake? Dipende dal valore di un altra moneta? E altre domande esistenziali. 
 
+> Due tipi di virtual mining: 
+>
+> * Proof of Stake: il mio mining power cresce tanto quanto lascio inutilizzato il mio stake. 
+> * Proof of deposit: il mio mining power cresce proporzionalmente allo stake che prometto di non spendere.
+
+
+
 
 
 

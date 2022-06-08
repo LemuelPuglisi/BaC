@@ -8,7 +8,7 @@ Il più grosso problema nelle criptovalute decentralizzate era quello di determi
 
 Un protocollo di consenso è interessante quando soddisfa un certo numero di proprietà. Le prime due sono fondamentali e sono la **consistency** e la **liveness**. 
 
-Per **consistency** intendiamo che i giocatori onesti devono essere tutti d'accordo in ogni particolare fase del protocollo su quello che loro considerano finale. Per **liveness** intendiamo il protocollo deve avere dei progressi. Lo stato di ciò che vedono gli utenti cambia continuamente (nuove transazioni, nuovi blocchi), ed il protocollo deve continuare a stabilire continuamente consenso su tutto ciò che arriva, assodando il consenso su ciò che è già arrivato. 
+Per **consistency** intendiamo che i giocatori onesti devono essere tutti d'accordo in ogni particolare fase del protocollo su quello che loro considerano finale. Per **liveness** intendiamo che il protocollo deve avere dei progressi. Lo stato di ciò che vedono gli utenti cambia continuamente (nuove transazioni, nuovi blocchi), ed il protocollo deve continuare a stabilire continuamente consenso su tutto ciò che arriva, assodando il consenso su ciò che è già arrivato. 
 
 La terza proprietà è il **tipo di rete**: la rete può essere **sincrona**, quindi i messaggi arrivano in maniera istantanea, o **asincrona**, quindi i messaggi hanno della latenza e l'ordine di arrivo non è garantito. La rete Bitcoin è **asincrona**, i peer da diverse parti della rete hanno un concetto di "prima" e "dopo" non omogeneo. Sotto certe circostanze, potremmo assumere che una rete sia **semi-sincrona**, ovvero dopo un intervallo di tempo $t$ possiamo dare per certo che il messaggio sia arrivato a destinazione. 
 
