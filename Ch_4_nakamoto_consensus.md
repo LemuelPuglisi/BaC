@@ -8,7 +8,7 @@ Il più grosso problema nelle criptovalute decentralizzate era quello di determi
 
 Un protocollo di consenso è interessante quando soddisfa un certo numero di proprietà. Le prime due sono fondamentali e sono la **consistency** e la **liveness**. 
 
-Per **consistency** intendiamo che i giocatori onesti devono essere tutti d'accordo in ogni particolare fase del protocollo su quello che loro considerano finale. Per **liveness** intendiamo il protocollo deve avere dei progressi. Lo stato di ciò che vedono gli utenti cambia continuamente (nuove transazioni, nuovi blocchi), ed il protocollo deve continuare a stabilire continuamente consenso su tutto ciò che arriva, assodando il consenso su ciò che è già arrivato. 
+Per **consistency** intendiamo che i giocatori onesti devono essere tutti d'accordo in ogni particolare fase del protocollo su quello che loro considerano finale. Per **liveness** intendiamo che il protocollo deve avere dei progressi. Lo stato di ciò che vedono gli utenti cambia continuamente (nuove transazioni, nuovi blocchi), ed il protocollo deve continuare a stabilire continuamente consenso su tutto ciò che arriva, assodando il consenso su ciò che è già arrivato. 
 
 La terza proprietà è il **tipo di rete**: la rete può essere **sincrona**, quindi i messaggi arrivano in maniera istantanea, o **asincrona**, quindi i messaggi hanno della latenza e l'ordine di arrivo non è garantito. La rete Bitcoin è **asincrona**, i peer da diverse parti della rete hanno un concetto di "prima" e "dopo" non omogeneo. Sotto certe circostanze, potremmo assumere che una rete sia **semi-sincrona**, ovvero dopo un intervallo di tempo $t$ possiamo dare per certo che il messaggio sia arrivato a destinazione. 
 
@@ -71,7 +71,7 @@ Sia:
 * $q$ la probabilità che $A$ mini un blocco
 * $p$ la probabilità che i giocatori onesti minino un blocco
 
-Le probabilità combaciano con la frazione di hashing power detenuta. Consideriamo che $A$ racchiuda tutti i giocatori onesti, come se la rete fosse partizionata in due insiemi, l'insieme $A$ e l'insieme dei giocatori onesti. In questo caso i due eventi sono **complementari**, dato che 1 blocco verrà proposto in maniera mutuamente esclusiva da una delle due parti. Quindi $p + q = 1$. Possiamo affermare che la probabilità $P_z$ che $A$ riesca nel suo intento è definita come segue: 
+Le probabilità combaciano con la frazione di hashing power detenuta. Consideriamo che $A$ racchiuda tutti i giocatori disonesti, come se la rete fosse partizionata in due insiemi, l'insieme $A$ e l'insieme dei giocatori onesti. In questo caso i due eventi sono **complementari**, dato che 1 blocco verrà proposto in maniera mutuamente esclusiva da una delle due parti. Quindi $p + q = 1$. Possiamo affermare che la probabilità $P_z$ che $A$ riesca nel suo intento è definita come segue: 
 $$
 P_z = \begin{cases}
 (\frac{q}{p})^z & \text{ if } p > q \\
@@ -220,7 +220,7 @@ Se volessimo valutare sommariamente ogni quanti round viene proposto un blocco d
 $$
 \frac{1}{\alpha p n}
 $$
-Considerando che tale blocco impiega $\Delta$ round a propagarsi, possiamo affermare che ogni $\frac{1}{\alpha p n}$ round, i successivi $\Delta$ round sono sprecati (poiché i giocatori onesti devono concordare sul blocco). Possiamo calcolare un valore che ci indichi quanto i giocatori onesti siano penalizzati rispetto a quelli onesti, dato che abbiamo supposto che i giocatori disonesti siano sincronizzati. Questo valore prende il nome di **discount rate** (con una accezione negativa) ed è definito come segue: 
+Considerando che tale blocco impiega $\Delta$ round a propagarsi, possiamo affermare che ogni $\frac{1}{\alpha p n}$ round, i successivi $\Delta$ round sono sprecati (poiché i giocatori onesti devono concordare sul blocco). Possiamo calcolare un valore che ci indichi quanto i giocatori onesti siano penalizzati rispetto a quelli disonesti, dato che abbiamo supposto che i giocatori disonesti siano sincronizzati. Questo valore prende il nome di **discount rate** (con una accezione negativa) ed è definito come segue: 
 $$
 \frac{\frac{1}{\alpha p n}}{\frac{1}{\alpha p n}+ \Delta} = 
 \frac{1}{1 + \alpha p n \Delta}
@@ -253,6 +253,15 @@ La maggioranza non basta, la frazione di potenza di mining dei giocatori onesti,
 
 ### Requisiti formali
 
+La blockchain di Nakamoto si può provare **sicura**, ovvero si può provare formalmente che rispetti le 3 proprietà enunciate all'inizio, sinché valgono le seguenti considerazioni: 
+
+1. $2pn\Delta < \frac 1 2$
+2. $\alpha(1-2pn\Delta) > \beta$ (dove al primo membro si ha la **discounted honest mining power**)
+
+
+
+### Riformulare la difficoltà
+
 E' possibile variare il parametro di difficoltà del mining $D_p$ in base alla probabilità $p$ di trovare un $nonce$ che risolva il puzzle. Ovvero possiamo calcolare $D_p$ in base a $p$ tale che per ogni coppia $(h, txs)$ si abbia:
 $$
 Pr_{nonce} [H(h, nonce, txs) < D_p] = p
@@ -264,15 +273,6 @@ $$
 
 > **Esempio.**
 > Supponiamo che $\lambda = 6$ e che la probabilità $p= 2^{-4}$. A rigor di logica, per avere una probabilità del genere il target dovrebbe essere $D_p = 000100_2$, ed il puzzle si risolverebbe solo per i valori $000011_2, 000010_2, 000001_2, 000000_2$, la probabilità di ottenere uno tra questi valori è proprio la probabilità che le 4 cifre più significative siano poste a 0, ed essendo eventi indipendenti questa probabilità equivale ad $2^{-4}$. In effetti, utilizzando la formula soprastante otteniamo proprio $D_p = 2^6 \cdot 2^{-4} = 2^2 = 4 = 000100_2$.
-
-Si può dimostrare che una volta fissata la probabilità $p$, la blockchain di Nakamoto si può provare **sicura**, ovvero si può provare formalmente che rispetti le 3 proprietà enunciate all'inizio, sinché valgono le seguenti considerazioni: 
-
-1. $2pn\Delta < \frac 1 2$
-2. $\alpha(1-2pn\Delta) > \beta$ (dove al primo membro si ha la **discounted honest mining power**)
-
-La probabilità $p$ è manipolabile andando a variare il parametro $D_p$, e quindi la difficoltà del puzzle. 
-
-> ⚠️⚠️⚠️ farsi chiarire il collegamento tra le proprietà (1) e (2) e la probabilità $p$ dal professore. In base a cosa devo aumentare o diminuire $p$?
 
 
 

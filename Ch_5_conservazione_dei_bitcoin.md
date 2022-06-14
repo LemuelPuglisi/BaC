@@ -141,6 +141,35 @@ Utilizzando solo il key sharing, per firmare una transazione dovremmo comunque p
 
 
 
+#### Schnorr Signature
+
+Sia $G$ un gruppo ciclico di ordine $q$ e sia $g$ un suo generatore. Si supponga che il problema del logaritmo discreto sia complesso in $G$. Sia $H: \{0,1\}^* \to \Z_q$ una funzione hash crittografica.
+
+- **Key generation**
+  - Si sceglie la chiave privata $x \in G$ random e si determina la chiave pubblica $y=g^x$.
+- **Sign** del messaggio $M$
+  - Si sceglie $k \in G$ random e sia $R = g^k$ 
+  - Sia $e = H(R \mid\mid M)$ 
+  - Sia $z = k + ex \mod q$
+  - La firma sarà $(R, z)$
+- **Verify** della firma $(R,z)$ sul messaggio $M$
+  - Sia $e = H(R \mid \mid M)$
+  - La firma è verificata se $g^z == R y^e$ 
+
+Lo schema è adattabile alla threshold cryptography, dove $n$ su $n$ share sono richieste per effettuare una firma valida. Supponiamo esistano $n$ shares $y_1, y_2, \dots, y_n$ con rispettive chiavi segrete $x_1, x_2, \dots, x_n$. Sia $y_{sum}$ la somma delle chiavi pubbliche e sia nota a tutti i partecipanti. Vediamo come viene effettuata l'operazione di firma: 
+
+* **MultiSign** del messaggio $M$: 
+  * ogni server $S_i$ sceglie $k_i$ random 
+  * Determina $R_i = g^{k_i}$ e lo invia a tutti
+  * Ognuno calcola $R = \prod R_i = \prod G^{k_i} = G^{k_1 + \dots + k_n}$
+  * Ognuno calcola $e = H(R \mid \mid M)$
+  * Ognuno calcola $z_i = k_i + e x_i$
+  * Ognuno invia la firma parziale $(R, z_i)$ 
+  * Si determina $Z = \sum z_i$ 
+  * La firma finale è $(R, Z)$ 
+
+
+
 ## Multisignature
 
 Anziché dividere una chiave segreta in shares, Bitcoin ci permette di utilizzare il meccanismo delle multisignature (MULTISIG), dove sono presenti $n$ chiavi private separate. Una transazione sarà valida solo se firmata attraverso $k$ delle $n$ chiavi. Le ragioni dell'utilizzo sono multiple: 

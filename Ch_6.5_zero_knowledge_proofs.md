@@ -47,7 +47,7 @@ $P$ potrebbe non voler dimostrare in maniera diretta che lo statement $S$ sia ve
 
 ### Definizione formale 
 
-Una dimostrazione (proof) che coinvolge un prover $P$ ed un verifier $V$ per un linguaggio $L$ è detta essere zero-knowledge se per ogni strategia di verifica $\hat{V}$ probabilista e polinomiale esiste un algoritmo $S$ (che può dipendere da $\hat{V}$, chiamato simulatore, tale che $\forall x \in L$, la distribuzione dell'ouput $S(x)$ è indistinguibile da $View_{\hat{v}}(P(x), V(x))$, dove quest'ultimo denota la "distribution over transcript" generata dal processo di verifica, ovvero dall'interazione della strategia di dimostrazione $P$ e da quella di verifica $\hat{V}$.
+Una dimostrazione (proof) che coinvolge un prover $P$ ed un verifier $V$ per un linguaggio $L$ è detta essere zero-knowledge se per ogni strategia di verifica $\hat{V}$ probabilistica e polinomiale esiste un algoritmo $S$ (che può dipendere da $\hat{V}$, chiamato simulatore, tale che $\forall x \in L$, la distribuzione dell'ouput $S(x)$ è indistinguibile da $View_{\hat{v}}(P(x), V(x))$, dove quest'ultimo denota la "distribution over transcript" generata dal processo di verifica, ovvero dall'interazione della strategia di dimostrazione $P$ e da quella di verifica $\hat{V}$.
 
 
 
@@ -71,7 +71,7 @@ Se esistono funzioni unidirezionali allora ogni linguaggio in NP ammette una com
 
 ## ZKP of membership
 
-Le zero-knowledge proof of mebmbership dimostrano che un certo elemento appartiene ad un certo insieme. Vedremo due esempi: uno sui grafi isomorfi e uno sulle triple Diffie-Hellman. 
+Le zero-knowledge proof of membership dimostrano che un certo elemento appartiene ad un certo insieme. Vedremo due esempi: uno sui grafi isomorfi e uno sulle triple Diffie-Hellman. 
 
 
 
@@ -155,7 +155,7 @@ Il protocollo di Schnorr è una delle proof of knowledge più famose, ed è una 
 1. $P$ sceglie un esponente random $r$, calcola $R=g^r$ (*commitment*) e lo invia a $V$.  
 2. $V$ sceglie un esponente random $c$ (*challenge*) e lo invia a $P$
 3. $P$ calcola $z=(r+cx \mod q)$ (*response*) e invia $z$ a $V$
-4. $V$ accetta se $g^z = Rh^c$. 
+4. $V$ accetta se $g^z = Ry^c$. 
 
 La prova è completa e valida, infatti è semplice dimostrare che esiste un extractor che funzioni nella seguente maniera: 
 
@@ -166,7 +166,7 @@ La prova è completa e valida, infatti è semplice dimostrare che esiste un extr
 
 Dimostriamo che l'output è esattamente $x$: 
 $$
-(s1-s_2) = (r+ c_1x) - (r+ c_2x) = x(c_1 - c_2)
+(s_1-s_2) = (r+ c_1x) - (r+ c_2x) = x(c_1 - c_2)
 $$
 Quindi avremo: 
 $$
@@ -196,7 +196,7 @@ Supponiamo che esista solo una taglia unitaria di zerocoin, e che 1.0 zerocoin v
 2. Calcolare $commit(S, r)$, il commitment per il numero seriale. 
 3. Pubblicare il commitment nella blockchain.
 
-Come vediamo nell'immagine sottostaten, la transazione che contiene il conio (mint) di uno zerocoin è firmata dall'utente e contiene in output il commitment del numero seriale dello zerocoin, mentre l'input è proprio il basecoin che si vuole "ripulire". La transazione **non rivela** il numero seriale. 
+Come vediamo nell'immagine sottostante, la transazione che contiene il conio (mint) di uno zerocoin è firmata dall'utente e contiene in output il commitment del numero seriale dello zerocoin, mentre l'input è proprio il basecoin che si vuole "ripulire". La transazione **non rivela** il numero seriale. 
 
 ![image-20220508123141956](Ch_6.5_zero_knowledge_proofs.assets/image-20220508123141956.png)
 

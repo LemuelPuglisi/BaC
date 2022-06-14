@@ -39,7 +39,7 @@ def scrypt(N, seed):
     V = np.zeros(N)
     # first step
     V[0] = seed
-    for i in range(N):
+    for i in range(1,N):
         V[i] = sha256(V[i-1])
     # second step
     X = sha256(V[N-1])
@@ -85,6 +85,13 @@ Esiste un ciclo di spesa effettuato dai miner, che consiste nel pagare elettrici
 > Ognuno ha una funzione pseudocasuale e la probabilità di vittoria aumenta con lo stake. Sia $\alpha$ un numero direttamente proporzionale al mio stake, allora prendo il numero generato e lo divido per $\alpha$. Più è alto è il denominatore (quindi lo stake), più è alta la probabilità di finire al di sotto del target e vincere. 
 
 Ma cosa da valore ad una crypto che si basa sulla proof of stake? Dipende dal valore di un altra moneta? E altre domande esistenziali. 
+
+> Due tipi di virtual mining: 
+>
+> * Proof of Stake: il mio mining power cresce tanto quanto lascio inutilizzato il mio stake. 
+> * Proof of deposit: il mio mining power cresce proporzionalmente allo stake che prometto di non spendere.
+
+
 
 
 
